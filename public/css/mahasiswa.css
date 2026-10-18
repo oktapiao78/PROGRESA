@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body { background-color: #f3f3f5; color: #4a4a4a; }
+
+/* Header */
+.top-header { background-color: #e5def4; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; }
+.header-title h1 { font-size: 1.2rem; font-weight: 800; color: #5c4e7a; }
+.header-title span { font-weight: 500; font-size: 1rem; color: #796b99; }
+.header-icons { display: flex; gap: 15px; }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #a482cc; font-size: 1.2rem; border: 2px solid #a482cc; position: relative; cursor: pointer; }
+.alert-icon .badge { position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; background-color: #f7a052; border-radius: 50%; }
+
+/* Main Container */
+.dashboard-container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+.card { background: #fff; border-radius: 16px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #e7e7e7; margin-bottom: 25px; }
+
+/* Section 1: Thesis Info */
+.thesis-info-card { display: flex; flex-direction: column; gap: 20px; }
+.thesis-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+.badges { display: flex; gap: 10px; margin-bottom: 10px; }
+.badge-yellow { background: #fdf2d0; color: #b78a0a; padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; }
+.badge-purple { background: #e5def4; color: #6a5796; padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; }
+.thesis-title-area h2 { font-size: 1.5rem; color: #333; margin-bottom: 5px; }
+.thesis-title-area .subtitle { color: #666; font-size: 0.9rem; }
+.progress-box { background: #f1eff5; padding: 15px 20px; border-radius: 12px; width: 300px; }
+.progress-text { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.progress-text span { font-size: 0.9rem; font-weight: 600; color: #666; }
+.progress-text .percentage { font-size: 1.4rem; font-weight: 800; color: #7b4fbc; }
+.progress-bar-bg { width: 100%; height: 8px; background: #dcd7e6; border-radius: 4px; margin-bottom: 8px; }
+.progress-bar-fill { height: 100%; background: #a45eeb; border-radius: 4px; }
+.progress-detail { font-size: 0.75rem; color: #888; text-align: center; }
+.supervisors { display: flex; gap: 40px; font-size: 0.9rem; color: #555; }
+
+/* Section 2: Alert */
+.alert-section { background: #fbe6e7; border-radius: 16px; padding: 20px; margin-bottom: 25px; border: 1px solid #fad2d5; }
+.alert-header { display: flex; align-items: center; gap: 15px; color: #c42b36; margin-bottom: 15px; }
+.alert-header i { font-size: 1.5rem; }
+.alert-header h4 { font-size: 1rem; font-weight: 700; margin-bottom: 3px; }
+.alert-header p { font-size: 0.85rem; }
+.alert-action-card { background: #fff; border-radius: 12px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+.alert-action-card h5 { color: #c42b36; font-size: 0.9rem; margin-bottom: 5px; }
+.alert-action-card p { font-size: 0.85rem; color: #555; }
+.btn-red { background: #c42b36; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.btn-red:hover { opacity: 0.9; }
+
+/* Section 3: Chapters */
+.chapters-section h3, .agenda-section h3 { font-size: 1.2rem; color: #333; margin-bottom: 5px; }
+.section-desc { font-size: 0.9rem; color: #666; margin-bottom: 15px; }
+.chapters-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+.chapter-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 15px; }
+.chapter-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.chap-num { font-size: 0.8rem; font-weight: 700; color: #999; }
+.status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+.status-green { background: #e3f5eb; color: #2ea05b; }
+.status-red { background: #fdeaea; color: #d03e3e; }
+.status-gray { background: #f0f0f0; color: #777; }
+.chapter-card h4 { font-size: 0.95rem; color: #333; margin-bottom: 20px; min-height: 40px; }
+.chap-stats { font-size: 0.75rem; color: #777; margin-bottom: 15px; }
+.stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.btn-purple-light { width: 100%; background: #e5def4; color: #7b4fbc; border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.btn-purple-light:hover { background: #dcd7e6; }
+
+/* Section 4: Agenda */
+.agenda-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; }
+.agenda-badge { display: inline-block; background: #e5def4; color: #6a5796; padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; margin-bottom: 10px; }
+.agenda-card h4 { font-size: 1rem; color: #333; margin-bottom: 5px; }
+.agenda-card p { font-size: 0.85rem; color: #666; }
+
+/* Bottom Bar */
+.bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 50px; background: #fadbed; display: flex; justify-content: center; align-items: flex-end; z-index: 100; }
+.pill-nav { background: #e0d8eb; padding: 15px 30px; border-radius: 30px 30px 0 0; display: flex; gap: 40px; transform: translateY(-10px); }
+.nav-item { color: #a092b7; font-size: 1.5rem; text-decoration: none; transition: transform 0.2s; }
+.nav-item.active { background: #fff; color: #7b4fbc; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; transform: translateY(-20px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.logout-form { position: absolute; right: 20px; bottom: 15px; }
+.logout-btn { background: transparent; border: none; color: #5c4e7a; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: color 0.2s; }
+.logout-btn:hover { color: #3b3054; }
+
+/* Responsiveness */
+@media (max-width: 992px) { .chapters-grid { grid-template-columns: repeat(2, 1fr); } .thesis-header-row { flex-direction: column; gap: 20px; } }
+@media (max-width: 600px) { .chapters-grid { grid-template-columns: 1fr; } .supervisors { flex-direction: column; gap: 10px; } }

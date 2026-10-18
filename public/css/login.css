@@ -1,0 +1,165 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #e3cbf5 0%, #fadbed 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #5c4e7a;
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 650px;
+    padding: 20px;
+    text-align: center;
+}
+
+.login-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #6a74da;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+}
+
+.login-header p {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #6f5f8b;
+    margin-bottom: 35px;
+    line-height: 1.5;
+}
+
+.login-card {
+    background: #ffffff;
+    border-radius: 25px;
+    padding: 45px 50px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+    text-align: left;
+    margin-bottom: 30px;
+}
+
+.input-group {
+    margin-bottom: 25px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    color: #897ca4;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.label-row label {
+    margin-bottom: 0;
+}
+
+.forgot-password {
+    font-size: 0.8rem;
+    color: #a482cc;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-wrapper i {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a79bbc;
+    font-size: 1.1rem;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 15px 15px;
+    border: 1px solid #e7dff2;
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #333;
+    outline: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02) inset;
+    transition: border-color 0.3s ease;
+}
+
+.input-group:first-of-type .input-wrapper input {
+    padding-left: 45px;
+}
+
+.input-wrapper input:focus {
+    border-color: #b091db;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 12px;
+    width: 16px;
+    height: 16px;
+    accent-color: #d1addf;
+    border: 1px solid #e7dff2;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #6f5f8b;
+    cursor: pointer;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(to right, #e2ccfb, #f0c3eb);
+    border: 1px solid #e4bee1;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #6f5f8b;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.login-btn:hover {
+    opacity: 0.9;
+}
+
+.login-footer p {
+    font-size: 0.7rem;
+    color: #6f5f8b;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
