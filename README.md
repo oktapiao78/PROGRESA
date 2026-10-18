@@ -6,12 +6,10 @@ Progresa adalah platform web berbasis Laravel untuk pengelolaan dan pemantauan t
 
 ## Fitur Utama
 
-- **Multi-Identifier Authentication**: Pengguna dapat masuk menggunakan NIM (Mahasiswa), NIP (Dosen, Koordinator TA, Kaprodi), atau Email (Semua Role).
+- **Multi-Identifier Authentication**: Pengguna dapat masuk menggunakan NIM (Mahasiswa), NIP (Dosen), atau Email (Semua Role).
 - **Multi-Role Access Control**:
   - **Mahasiswa**: Pengajuan draf skripsi per bab, histori versi file, tanggapan revisi, dan pengajuan jadwal bimbingan.
   - **Dosen Pembimbing (P1 & P2)**: Review bab, checklist revisi interaktif, persetujuan bab bertingkat, dan manajemen slot bimbingan.
-  - **Koordinator TA**: Monitoring progres seluruh mahasiswa prodi, eskalasi keterlambatan/stagnansi bimbingan, dan analisis risiko.
-  - **Ketua Program Studi (Kaprodi)**: Dashboard eksekutif distribusi beban bimbingan dosen, statistik kelulusan tepat waktu, dan audit aktivitas.
   - **Administrator**: Pengelolaan master data pengguna, program studi, dan audit log sistem.
 - **Visual Document Diff**: Komparasi visual kata/baris antara dua versi draf naskah skripsi secara real-time.
 - **Deteksi Stagnansi & Eskalasi Otomatis**: Identifikasi mahasiswa tanpa aktivitas bimbingan > 14 atau > 28 hari.
