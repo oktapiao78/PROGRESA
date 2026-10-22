@@ -24,11 +24,11 @@ enum UserRole: string
     public function badgeColor(): string
     {
         return match($this) {
-            self::MAHASISWA => 'bg-sky-100 text-sky-800 border-sky-200',
-            self::DOSEN => 'bg-indigo-100 text-indigo-800 border-indigo-200',
-            self::KOORDINATOR => 'bg-amber-100 text-amber-800 border-amber-200',
-            self::KAPRODI => 'bg-purple-100 text-purple-800 border-purple-200',
-            self::ADMIN => 'bg-rose-100 text-rose-800 border-rose-200',
+            self::MAHASISWA => 'bg-blue-500/20 text-blue-400',
+            self::DOSEN => 'bg-emerald-500/20 text-emerald-400',
+            self::KOORDINATOR => 'bg-amber-500/20 text-amber-400',
+            self::KAPRODI => 'bg-purple-500/20 text-purple-400',
+            self::ADMIN => 'bg-rose-500/20 text-rose-400',
         };
     }
 }

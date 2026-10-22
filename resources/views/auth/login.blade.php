@@ -1,113 +1,74 @@
-@extends('layouts.guest', ['title' => 'Masuk ke Portal'])
+@extends('layouts.guest')
+
+@section('title', 'Login - PROGRESA')
+
+@push('styles')
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background: linear-gradient(135deg, #e8dff5 0%, #f4d7f4 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { font-size: 3.5rem; font-weight: 800; letter-spacing: 2px; background: linear-gradient(90deg, #7e7deb 0%, #b56dba 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; }
+    .header p { color: #6b6b7b; font-size: 1.1rem; font-weight: 600; max-width: 600px; line-height: 1.5; margin: 0 auto; }
+    .login-card { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 30px; padding: 40px 50px; width: 100%; max-width: 650px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.8); }
+    .form-group { margin-bottom: 20px; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    label { font-size: 0.85rem; font-weight: 800; color: #7a7a8c; letter-spacing: 0.5px; text-transform: uppercase; }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-wrapper .icon-left { position: absolute; left: 20px; color: #a0a0b0; width: 20px; height: 20px; }
+    input[type="text"], input[type="password"] { width: 100%; padding: 16px 20px 16px 50px; border: 1px solid #e1e1e8; border-radius: 12px; background-color: #ffffff; font-size: 1rem; color: #333; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02); outline: none; transition: all 0.3s ease; }
+    input:focus { border-color: #b56dba; box-shadow: 0 0 0 3px rgba(181, 109, 186, 0.1); }
+    .btn-toggle-password { position: absolute; right: 20px; background: none; border: none; cursor: pointer; color: #a0a0b0; display: flex; align-items: center; justify-content: center; }
+    .btn-toggle-password:hover { color: #7a7a8c; }
+    .btn-toggle-password svg { width: 20px; height: 20px; }
+    .checkbox-group { display: flex; align-items: center; margin-bottom: 25px; margin-top: 10px; }
+    .checkbox-group input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid #e1e1e8; border-radius: 6px; background-color: #fff; cursor: pointer; margin-right: 10px; position: relative; transition: all 0.2s; }
+    .checkbox-group input[type="checkbox"]:checked { background-color: #b56dba; border-color: #b56dba; }
+    .checkbox-group input[type="checkbox"]:checked::after { content: '✔'; position: absolute; color: white; font-size: 12px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .checkbox-group label { color: #7a7a8c; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-bottom: 0; text-transform: none; }
+    .btn-submit { width: 100%; padding: 16px; border: none; border-radius: 12px; background: linear-gradient(90deg, #d3c4f3 0%, #f3c3e9 100%); color: #555; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(181, 109, 186, 0.15); transition: all 0.3s ease; border: 1px solid rgba(255, 255, 255, 0.5); }
+    .btn-submit:hover { background: linear-gradient(90deg, #c5b3ed 0%, #edb3e1 100%); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(181, 109, 186, 0.25); }
+    .footer { margin-top: 40px; text-align: center; color: #8a8a9d; font-size: 0.8rem; font-weight: 600; line-height: 1.8; }
+    .footer a { color: #7e7deb; text-decoration: none; font-weight: 700; }
+    .footer a:hover { text-decoration: underline; }
+    @media (max-width: 768px) { .header h1 { font-size: 2.5rem; } .login-card { padding: 30px 20px; } }
+</style>
+@endpush
 
 @section('content')
-<div class="w-full bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl p-5 sm:p-8">
-    <div class="mb-5 sm:mb-6 text-center sm:text-left">
-        <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">Selamat Datang Kembali</h2>
-        <p class="text-xs text-slate-400 mt-1">Masuk menggunakan NIM, NIP, atau email terdaftar.</p>
+    <div class="header">
+        <h1>PROGRESA</h1>
+        <p>Sistem Manajemen Bimbingan Skripsi & Tugas Akhir Berbasis Progres dan Approval Bertingkat</p>
     </div>
 
-    @if($errors->any())
-        <div class="mb-4 p-3.5 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs">
-            <div class="flex items-start space-x-2">
-                <svg class="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                <span>{{ $errors->first() }}</span>
-            </div>
-        </div>
-    @endif
-
-    @if(session('success'))
-        <div class="mb-4 p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 text-xs">
-            <div class="flex items-start space-x-2">
-                <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                <span>{{ session('success') }}</span>
-            </div>
-        </div>
-    @endif
-
-    <form method="POST" action="{{ route('login') }}" class="space-y-4">
-        @csrf
-
-        <div>
-            <label for="login" class="block text-xs font-semibold text-slate-300 mb-1.5">NIM / NIP / Email</label>
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+    <div class="login-card" x-data="{ showPassword: false }">
+        <form action="{{ route('login') }}" method="POST">
+            @csrf
+            <div class="form-group">
+                <label for="username">NIM / NIP / EMAIL</label>
+                <div class="input-wrapper">
+                    <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <input type="text" id="username" name="login" required autofocus>
                 </div>
-                <input id="login" name="login" type="text" required autofocus value="{{ old('login') }}"
-                    placeholder="Contoh: 230101001 atau user@progresa.ac.id"
-                    class="block w-full pl-10 pr-4 py-3 sm:py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
             </div>
-        </div>
-
-        <div>
-            <div class="flex items-center justify-between mb-1.5">
-                <label for="password" class="block text-xs font-semibold text-slate-300">Kata Sandi</label>
-            </div>
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <div class="form-group">
+                <div class="label-row"><label for="password">KATA SANDI</label></div>
+                <div class="input-wrapper">
+                    <input :type="showPassword ? 'text' : 'password'" id="password" name="password" required>
+                    <button type="button" class="btn-toggle-password" @click="showPassword = !showPassword">
+                        <svg x-show="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <svg x-show="showPassword" x-cloak viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                    </button>
                 </div>
-                <input id="password" name="password" type="password" required
-                    placeholder="••••••••"
-                    class="block w-full pl-10 pr-4 py-3 sm:py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
             </div>
-        </div>
-
-        <div class="flex items-center justify-between pt-1">
-            <label class="flex items-center cursor-pointer">
-                <input type="checkbox" name="remember" class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-slate-900">
-                <span class="ml-2 text-xs text-slate-400">Ingat sesi saya</span>
-            </label>
-        </div>
-
-        <button type="submit" class="w-full mt-2 py-3 sm:py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] text-white font-semibold rounded-xl text-sm shadow-lg shadow-emerald-950/50 hover:shadow-emerald-900/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition cursor-pointer">
-            Masuk ke Sistem
-        </button>
-    </form>
-
-    <!-- Quick Demo Switcher -->
-    <div class="mt-6 pt-5 border-t border-slate-700/60">
-        <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 text-center">Akun Demo Cepat (1-Klik Isi)</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <button type="button" onclick="fillCredentials('mahasiswa1@progresa.ac.id', 'password123')"
-                class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-700/70 hover:border-emerald-500/60 hover:bg-slate-700/50 text-left transition cursor-pointer">
-                <span class="block font-semibold text-emerald-400 text-xs">Mahasiswa 1</span>
-                <span class="block text-[10px] text-slate-400">NIM: 230101001</span>
-            </button>
-            <button type="button" onclick="fillCredentials('pembimbing1@progresa.ac.id', 'password123')"
-                class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-700/70 hover:border-indigo-500/60 hover:bg-slate-700/50 text-left transition cursor-pointer">
-                <span class="block font-semibold text-indigo-400 text-xs">Pembimbing 1</span>
-                <span class="block text-[10px] text-slate-400">NIP: 19800315...</span>
-            </button>
-            <button type="button" onclick="fillCredentials('pembimbing2@progresa.ac.id', 'password123')"
-                class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-700/70 hover:border-indigo-500/60 hover:bg-slate-700/50 text-left transition cursor-pointer">
-                <span class="block font-semibold text-indigo-400 text-xs">Pembimbing 2</span>
-                <span class="block text-[10px] text-slate-400">NIP: 19850720...</span>
-            </button>
-            <button type="button" onclick="fillCredentials('koordinator@progresa.ac.id', 'password123')"
-                class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-700/70 hover:border-amber-500/60 hover:bg-slate-700/50 text-left transition cursor-pointer">
-                <span class="block font-semibold text-amber-400 text-xs">Koordinator TA</span>
-                <span class="block text-[10px] text-slate-400">Monitoring & Approval</span>
-            </button>
-            <button type="button" onclick="fillCredentials('kaprodi@progresa.ac.id', 'password123')"
-                class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-700/70 hover:border-purple-500/60 hover:bg-slate-700/50 text-left transition cursor-pointer">
-                <span class="block font-semibold text-purple-400 text-xs">Kaprodi</span>
-                <span class="block text-[10px] text-slate-400">Eksekutif & Risiko</span>
-            </button>
-            <button type="button" onclick="fillCredentials('admin@progresa.ac.id', 'password123')"
-                class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-700/70 hover:border-rose-500/60 hover:bg-slate-700/50 text-left transition cursor-pointer">
-                <span class="block font-semibold text-rose-400 text-xs">Administrator</span>
-                <span class="block text-[10px] text-slate-400">Master Data & Audit</span>
-            </button>
-        </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="remember" name="remember">
+                <label for="remember">Ingat sesi saya</label>
+            </div>
+            <button type="submit" class="btn-submit">Masuk ke Sistem</button>
+        </form>
     </div>
-</div>
 
-<script>
-    function fillCredentials(login, password) {
-        document.getElementById('login').value = login;
-        document.getElementById('password').value = password;
-    }
-</script>
+    <div class="footer">
+        <p>&copy; {{ date('Y') }} Progresa Academic Portal. Hak Cipta Dilindungi.</p>
+    </div>
 @endsection

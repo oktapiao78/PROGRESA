@@ -2,139 +2,79 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ChapterStatus;
-use App\Enums\SupervisionStatus;
 use App\Enums\UserRole;
-use App\Models\AuditLog;
-use App\Models\ChapterTemplate;
-use App\Models\RevisionItem;
-use App\Models\StudyProgram;
-use App\Models\SupervisionRequest;
-use App\Models\SupervisionSlot;
-use App\Models\Thesis;
-use App\Models\ThesisChapter;
-use App\Models\User;
-use App\Services\AnalyticsAndRiskService;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    protected AnalyticsAndRiskService $analyticsService;
-
-    public function __construct(AnalyticsAndRiskService $analyticsService)
+    public function index()
     {
-        $this->analyticsService = $analyticsService;
-    }
+        $role = auth()->user()->role ?? UserRole::MAHASISWA;
 
-    public function index(): View
-    {
-        $user = auth()->user();
-
-        return match ($user->role) {
-            UserRole::MAHASISWA => $this->mahasiswaDashboard($user),
-            UserRole::DOSEN => $this->dosenDashboard($user),
-            UserRole::KOORDINATOR => $this->koordinatorDashboard($user),
-            UserRole::KAPRODI => $this->kaprodiDashboard($user),
-            UserRole::ADMIN => $this->adminDashboard($user),
-        };
-    }
-
-    protected function mahasiswaDashboard(User $student): View
-    {
-        $thesis = $student->studentThesis()
-            ->with(['supervisor1', 'supervisor2', 'chapters.currentVersion', 'chapters.revisionItems', 'chapters.approvals'])
-            ->first();
-
-        $openRevisions = [];
-        $upcomingSupervisions = [];
-
-        if ($thesis) {
-            // Update stagnation status
-            $this->analyticsService->analyzeThesis($thesis);
-
-            $openRevisions = RevisionItem::whereHas('chapter', fn($q) => $q->where('thesis_id', $thesis->id))
-                ->where('is_resolved', false)
-                ->with(['chapter', 'supervisor'])
-                ->get();
-
-            $upcomingSupervisions = SupervisionRequest::where('student_id', $student->id)
-                ->whereIn('status', [SupervisionStatus::REQUESTED, SupervisionStatus::ACCEPTED])
-                ->with(['supervisor', 'slot'])
-                ->orderBy('scheduled_at')
-                ->get();
+        if ($role === UserRole::DOSEN) {
+            return $this->dosenDashboard();
         }
 
-        return view('dashboard.mahasiswa', compact('student', 'thesis', 'openRevisions', 'upcomingSupervisions'));
+        return $this->mahasiswaDashboard();
     }
 
-    protected function dosenDashboard(User $dosen): View
+    protected function mahasiswaDashboard()
     {
-        $thesesAsP1 = Thesis::where('supervisor_1_id', $dosen->id)
-            ->with(['student', 'chapters.approvals', 'latestStagnation'])
-            ->get();
-
-        $thesesAsP2 = Thesis::where('supervisor_2_id', $dosen->id)
-            ->with(['student', 'chapters.approvals', 'latestStagnation'])
-            ->get();
-
-        // Pending chapter reviews
-        $pendingChapters = ThesisChapter::whereHas('thesis', function ($q) use ($dosen) {
-                $q->where('supervisor_1_id', $dosen->id)->orWhere('supervisor_2_id', $dosen->id);
-            })
-            ->whereIn('status', [ChapterStatus::SUBMITTED, ChapterStatus::IN_REVIEW])
-            ->with(['thesis.student', 'currentVersion'])
-            ->get();
-
-        // Pending supervision requests
-        $pendingRequests = SupervisionRequest::where('supervisor_id', $dosen->id)
-            ->where('status', SupervisionStatus::REQUESTED)
-            ->with(['student', 'thesis', 'slot'])
-            ->latest()
-            ->get();
-
-        // Active slots
-        $activeSlots = SupervisionSlot::where('supervisor_id', $dosen->id)
-            ->where('is_active', true)
-            ->where('date', '>=', now()->toDateString())
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
-
-        return view('dashboard.dosen', compact('dosen', 'thesesAsP1', 'thesesAsP2', 'pendingChapters', 'pendingRequests', 'activeSlots'));
-    }
-
-    protected function koordinatorDashboard(User $user): View
-    {
-        $metrics = $this->analyticsService->getAggregatedMetrics($user->study_program_id);
-
-        $theses = Thesis::with(['student', 'supervisor1', 'supervisor2', 'chapters', 'latestStagnation'])
-            ->latest()
-            ->paginate(15);
-
-        return view('dashboard.koordinator', compact('metrics', 'theses'));
-    }
-
-    protected function kaprodiDashboard(User $user): View
-    {
-        $metrics = $this->analyticsService->getAggregatedMetrics($user->study_program_id);
-
-        return view('dashboard.kaprodi', compact('metrics'));
-    }
-
-    protected function adminDashboard(User $user): View
-    {
-        $stats = [
-            'users_count' => User::count(),
-            'students_count' => User::where('role', UserRole::MAHASISWA)->count(),
-            'lecturers_count' => User::where('role', UserRole::DOSEN)->count(),
-            'theses_count' => Thesis::count(),
-            'study_programs_count' => StudyProgram::count(),
-            'chapter_templates_count' => ChapterTemplate::count(),
+        $student = (object) ['name' => 'Naura Ayunda', 'nim_nip' => '233150601111055'];
+        
+        $thesis = (object) [
+            'title' => 'Rancang Bangun Sistem Informasi Pemantauan Bimbingan Skripsi Menggunakan Arsitektur Modular',
+            'objective' => 'Tujuan Penelitian',
+            'status' => 'Bimbingan Berjalan',
+            'risk_level' => 'Rendah',
+            'supervisor1' => (object) ['name' => 'Ir. Dr. Arka Mahendrata., S.T., S.kom.'],
+            'supervisor2' => (object) ['name' => 'Anindya Sekar Pranadya., S.pd., M. Cs.'],
+            'chapters' => [
+                (object) ['title' => 'BAB I: Pendahuluan', 'status' => 'Disetujui', 'version' => 1, 'revisions_open' => 0, 'revisions_total' => 0],
+                (object) ['title' => 'BAB II: Tinjauan Pustaka', 'status' => 'Disetujui', 'version' => 1, 'revisions_open' => 0, 'revisions_total' => 0],
+                (object) ['title' => 'BAB III: Metodologi Penelitian', 'status' => 'Perlu Revisi', 'version' => 1, 'revisions_open' => 0, 'revisions_total' => 0],
+                (object) ['title' => 'BAB IV: Hasil Penelitian', 'status' => 'Belum Dimulai', 'version' => 1, 'revisions_open' => 0, 'revisions_total' => 0],
+            ]
         ];
 
-        $recentLogs = AuditLog::with('user')->latest()->take(10)->get();
+        return view('dashboard.mahasiswa', compact('student', 'thesis'));
+    }
 
-        return view('dashboard.admin', compact('stats', 'recentLogs'));
+    protected function dosenDashboard()
+    {
+        $stats = (object) [
+            'p1_count' => 2,
+            'p2_count' => 3,
+            'draft_count' => 0,
+            'request_count' => 2,
+        ];
+
+        $mahasiswa_list = [
+            (object) [
+                'nama' => 'Naura Ayunda',
+                'nim' => '233150601111055',
+                'judul' => 'Rancang Bangun Sistem Informasi Pemantauan Bimbingan Skripsi Menggunakan Arsitektur Modular',
+                'progress' => 30,
+                'risk' => null,
+                'pembimbing' => 'Pembimbing 1'
+            ],
+            (object) [
+                'nama' => 'Ellio Chandranata',
+                'nim' => '233150601111028',
+                'judul' => 'Analisis Sentimen Opini Publik Terhadap Kebijakan Transportasi Cerdas Menggunakan IndoTrans',
+                'progress' => 50,
+                'risk' => 'Risiko Tinggi (Stagnan)',
+                'pembimbing' => 'Pembimbing 1'
+            ],
+            (object) [
+                'nama' => 'Sammy Galleo',
+                'nim' => '233150601111029',
+                'judul' => 'Penerapan Deep Learning Convolutional Neural Network untuk Klasifikasi Penyakit Daun Padi Berbasis Citra',
+                'progress' => 20,
+                'risk' => 'Kritis (Terancam DO/Mundur)',
+                'pembimbing' => 'Pembimbing 2'
+            ],
+        ];
+
+        return view('dashboard.dosen', compact('stats', 'mahasiswa_list'));
     }
 }
