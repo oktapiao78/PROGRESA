@@ -41,13 +41,29 @@
     </div>
 
     <div class="login-card" x-data="{ showPassword: false }">
+        @if (session('success'))
+            <div style="background-color: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; font-size: 0.85rem; font-weight: 600;">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div style="background-color: #fde8e8; border: 1px solid #f8b4b4; color: #9b1c1c; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; font-size: 0.85rem;">
+                <ul style="margin: 0; padding-left: 20px;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form action="{{ route('login') }}" method="POST">
             @csrf
             <div class="form-group">
                 <label for="username">NIM / NIP / EMAIL</label>
                 <div class="input-wrapper">
                     <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <input type="text" id="username" name="login" required autofocus>
+                    <input type="text" id="username" name="login" value="{{ old('login') }}" required autofocus>
                 </div>
             </div>
             <div class="form-group">
@@ -69,6 +85,7 @@
     </div>
 
     <div class="footer">
+        <p>Belum memiliki akun? <a href="{{ route('register') }}">Daftar di sini</a></p>
         <p>&copy; {{ date('Y') }} Progresa Academic Portal. Hak Cipta Dilindungi.</p>
     </div>
 @endsection

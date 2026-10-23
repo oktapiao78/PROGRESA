@@ -84,18 +84,18 @@
         <section class="card main-info-card">
             <div class="info-left">
                 <div class="tags">
-                    <span class="tag tag-yellow">Bimbingan Berjalan</span>
-                    <span class="tag tag-purple">Risiko Rendah</span>
+                    <span class="tag tag-yellow">{{ $thesis->status ?? 'Bimbingan Berjalan' }}</span>
+                    <span class="tag tag-purple">Risiko {{ $thesis->risk_level ?? 'Rendah' }}</span>
                 </div>
-                <h2 class="title">Judul Skripsi</h2>
-                <p class="subtitle">Tujuan Penelitian</p>
+                <h2 class="title">{{ $thesis->title ?? 'Judul Skripsi' }}</h2>
+                <p class="subtitle">{{ $thesis->objective ?? 'Tujuan Penelitian' }}</p>
                 
                 <div class="dosen-row">
                     <div class="dosen">
-                        <span>Pembimbing 1 |</span> <strong>Ir. Dr. Arka Mahendrata., S.T., S.kom.</strong>
+                        <span>Pembimbing 1 |</span> <strong>{{ $thesis->supervisor1->name ?? 'Ir. Dr. Arka Mahendrata., S.T., S.kom.' }}</strong>
                     </div>
                     <div class="dosen">
-                        <span>Pembimbing 2 |</span> <strong>Anindya Sekar Pranadya., S.pd., M. Cs.</strong>
+                        <span>Pembimbing 2 |</span> <strong>{{ $thesis->supervisor2->name ?? 'Anindya Sekar Pranadya., S.pd., M. Cs.' }}</strong>
                     </div>
                 </div>
             </div>

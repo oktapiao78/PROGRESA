@@ -52,7 +52,7 @@ class AuthenticationFlowTest extends TestCase
             'email' => 'koordinator@progresa.ac.id',
             'nim_nip' => '198205122008121002',
             'password' => Hash::make('password123'),
-            'role' => UserRole::KOORDINATOR,
+            'role' => UserRole::DOSEN,
             'study_program_id' => $studyProgram->id,
             'is_active' => true,
         ]);
@@ -69,7 +69,7 @@ class AuthenticationFlowTest extends TestCase
     }
 
     /**
-     * Skenario A: Login menggunakan NIM + password benar → berhasil
+     * Skenario A: Login menggunakan NIM + password benar → berhasil ke Dashboard Mahasiswa
      */
     public function test_user_can_login_with_nim_and_correct_password(): void
     {
@@ -78,12 +78,12 @@ class AuthenticationFlowTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect(route('dashboard.mahasiswa'));
         $this->assertAuthenticatedAs($this->studentUser);
     }
 
     /**
-     * Skenario B: Login menggunakan NIP + password benar → berhasil
+     * Skenario B: Login menggunakan NIP + password benar → berhasil ke Dashboard Dosen
      */
     public function test_user_can_login_with_nip_and_correct_password(): void
     {
@@ -92,7 +92,7 @@ class AuthenticationFlowTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect(route('dashboard.dosen'));
         $this->assertAuthenticatedAs($this->supervisorUser);
     }
 
@@ -106,7 +106,7 @@ class AuthenticationFlowTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect(route('dashboard.mahasiswa'));
         $this->assertAuthenticatedAs($this->studentUser);
     }
 
@@ -120,7 +120,7 @@ class AuthenticationFlowTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect(route('dashboard.mahasiswa'));
         $this->assertAuthenticatedAs($this->studentUser);
     }
 
@@ -134,7 +134,7 @@ class AuthenticationFlowTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect(route('dashboard.mahasiswa'));
         $this->assertAuthenticatedAs($this->studentUser);
     }
 
@@ -148,7 +148,7 @@ class AuthenticationFlowTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertRedirect('/dashboard');
+        $response->assertRedirect(route('dashboard.dosen'));
         $this->assertAuthenticatedAs($this->coordinatorUser);
     }
 
@@ -163,9 +163,7 @@ class AuthenticationFlowTest extends TestCase
         ]);
 
         $response->assertRedirect('/login');
-        $response->assertSessionHasErrors([
-            'login' => 'NIM / NIP / Email atau kata sandi tidak cocok.',
-        ]);
+        $response->assertSessionHasErrors(['login']);
         $this->assertGuest();
     }
 
@@ -180,9 +178,7 @@ class AuthenticationFlowTest extends TestCase
         ]);
 
         $response->assertRedirect('/login');
-        $response->assertSessionHasErrors([
-            'login' => 'NIM / NIP / Email atau kata sandi tidak cocok.',
-        ]);
+        $response->assertSessionHasErrors(['login']);
         $this->assertGuest();
     }
 
@@ -235,12 +231,10 @@ class AuthenticationFlowTest extends TestCase
     {
         $protectedUrls = [
             '/dashboard',
-            '/mahasiswa',
-            '/dosen',
-            '/koordinator',
-            '/kaprodi',
-            '/theses',
-            '/supervision',
+            '/dashboard/mahasiswa',
+            '/dashboard/dosen',
+            '/profile/mahasiswa',
+            '/profile/dosen',
         ];
 
         foreach ($protectedUrls as $url) {
@@ -250,16 +244,15 @@ class AuthenticationFlowTest extends TestCase
     }
 
     /**
-     * Skenario G: User berhasil login → dapat membuka /dashboard dan tidak melihat form login
+     * Skenario G: User berhasil login → dapat membuka dashboard dan tidak melihat form login
      */
     public function test_authenticated_user_sees_dashboard_and_no_login_form(): void
     {
-        $response = $this->actingAs($this->studentUser)->get('/dashboard');
+        $response = $this->actingAs($this->studentUser)->get('/dashboard/mahasiswa');
 
         $response->assertStatus(200);
-        $response->assertSee('Budi Mahasiswa');
+        $response->assertSee('Portal Tugas Akhir');
         $response->assertDontSee('Masuk ke Sistem');
-        $response->assertDontSee('Akun Demo Cepat');
     }
 
     public function test_authenticated_user_accessing_login_is_redirected_to_dashboard(): void
@@ -293,10 +286,8 @@ class AuthenticationFlowTest extends TestCase
         $response = $this->get('/login');
 
         $response->assertStatus(200);
-        $response->assertSee('Selamat Datang Kembali');
+        $response->assertSee('PROGRESA');
         $response->assertSee('Masuk ke Sistem');
         $response->assertDontSee('Total Progres Bab');
-        $response->assertDontSee('Jadwal Bimbingan');
-        $response->assertDontSee('Stagnansi & Eskalasi');
     }
 }

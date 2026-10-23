@@ -33,27 +33,38 @@
     </div>
 
     <div class="register-card">
+        @if ($errors->any())
+            <div style="background-color: #fde8e8; border: 1px solid #f8b4b4; color: #9b1c1c; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; font-size: 0.85rem;">
+                <div style="font-weight: 700; margin-bottom: 5px;">Pendaftaran belum berhasil:</div>
+                <ul style="margin: 0; padding-left: 20px;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form action="{{ route('register') }}" method="POST">
             @csrf
             <div class="form-group">
                 <label for="name">NAMA LENGKAP</label>
                 <div class="input-wrapper">
                     <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <input type="text" id="name" name="name" required autofocus>
+                    <input type="text" id="name" name="name" value="{{ old('name') }}" required autofocus>
                 </div>
             </div>
             <div class="form-group">
                 <label for="nim_nip">NIM / NIP</label>
                 <div class="input-wrapper">
                     <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="7" y1="16" x2="13" y2="16"></line></svg>
-                    <input type="text" id="nim_nip" name="nim_nip" required>
+                    <input type="text" id="nim_nip" name="nim_nip" value="{{ old('nim_nip') }}" required>
                 </div>
             </div>
             <div class="form-group">
                 <label for="email">EMAIL</label>
                 <div class="input-wrapper">
                     <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" required>
                 </div>
             </div>
             <div class="form-group">
@@ -71,9 +82,9 @@
             <div class="form-group">
                 <label for="role">PILIH ROLE</label>
                 <select id="role" name="role" required>
-                    <option value="" disabled selected>-- Pilih Role --</option>
-                    <option value="mahasiswa">Mahasiswa</option>
-                    <option value="dosen">Dosen Pembimbing</option>
+                    <option value="" disabled {{ old('role') ? '' : 'selected' }}>-- Pilih Role --</option>
+                    <option value="mahasiswa" {{ old('role') === 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
+                    <option value="dosen" {{ old('role') === 'dosen' ? 'selected' : '' }}>Dosen Pembimbing</option>
                 </select>
             </div>
             <button type="submit" class="btn-submit">Daftar Akun</button>
