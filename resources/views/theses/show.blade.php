@@ -60,19 +60,24 @@
 
             <!-- Progress & Actions -->
             <div class="w-full lg:w-72 flex flex-col justify-between space-y-4">
-                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-center">
+                <div class="bg-[#f8f7fc] border border-slate-200/80 rounded-2xl p-4 text-center">
                     <span class="text-xs font-semibold text-slate-500 block">Kemajuan Kumulatif</span>
-                    <span class="text-3xl font-black text-emerald-600 my-1 block">{{ $thesis->progress_percentage }}%</span>
+                    <span class="text-3xl font-black text-[#7B5EA7] my-1 block">{{ $thesis->progress_percentage }}%</span>
                     <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden my-2">
-                        <div class="bg-emerald-500 h-2.5 rounded-full" style="width: {{ $thesis->progress_percentage }}%"></div>
+                        <div class="bg-[#9D62CC] h-2.5 rounded-full" style="width: {{ $thesis->progress_percentage }}%"></div>
                     </div>
                     <span class="text-[11px] text-slate-400">
                         {{ $thesis->chapters->where('status', \App\Enums\ChapterStatus::APPROVED)->count() }} dari {{ $thesis->chapters->count() }} Bab Disetujui
                     </span>
                 </div>
 
-                @if(auth()->user()->isKoordinator() || auth()->user()->isAdmin())
-                    <div class="space-y-2">
+                <div class="space-y-2">
+                    @if(auth()->user()->isDosen())
+                        <a href="{{ route('chat.index', ['user_id' => $thesis->student_id]) }}" class="block text-center py-2 px-3 bg-[#DDD7FA] hover:bg-[#DCD7FE] text-[#7B5EA7] rounded-xl text-xs font-bold transition">
+                            💬 Chat Mahasiswa Ini
+                        </a>
+                    @endif
+                    @if(auth()->user()->isKoordinator() || auth()->user()->isAdmin())
                         @if(!$thesis->latestStagnation?->is_escalated)
                             <form action="{{ route('approvals.escalate', $thesis) }}" method="POST">
                                 @csrf
@@ -91,8 +96,8 @@
                         <a href="{{ route('theses.edit', $thesis) }}" class="block text-center py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
                             Edit Pembimbing & Data Skripsi
                         </a>
-                    </div>
-                @endif
+                    @endif
+                </div>
             </div>
         </div>
     </div>

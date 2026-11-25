@@ -19,6 +19,18 @@ class DashboardController extends Controller
             return redirect()->route('dashboard.dosen');
         }
 
+        if ($user && $user->isKoordinator()) {
+            return redirect()->route('dashboard.koordinator');
+        }
+
+        if ($user && $user->isKaprodi()) {
+            return redirect()->route('dashboard.kaprodi');
+        }
+
+        if ($user && $user->isAdmin()) {
+            return redirect()->route('admin.users.index');
+        }
+
         return redirect()->route('dashboard.mahasiswa');
     }
 
@@ -147,5 +159,20 @@ class DashboardController extends Controller
         });
 
         return view('dashboard.dosen', compact('stats', 'mahasiswa_list', 'pendingDrafts'));
+    }
+
+    public function koordinatorDashboard(\App\Services\AnalyticsAndRiskService $analyticsService)
+    {
+        $metrics = $analyticsService->getAggregatedMetrics();
+        $theses = Thesis::with(['student', 'supervisor1', 'supervisor2', 'latestStagnation'])->paginate(15);
+
+        return view('dashboard.koordinator', compact('metrics', 'theses'));
+    }
+
+    public function kaprodiDashboard(\App\Services\AnalyticsAndRiskService $analyticsService)
+    {
+        $metrics = $analyticsService->getAggregatedMetrics(Auth::user()->study_program_id);
+
+        return view('dashboard.kaprodi', compact('metrics'));
     }
 }

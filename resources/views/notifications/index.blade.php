@@ -1,51 +1,75 @@
 @extends('layouts.app', [
     'title' => 'Pemberitahuan',
     'headerTitle' => 'Pemberitahuan',
-    'headerSubtitle' => 'Proses & Bimbingan Skripsi'
+    'headerSubtitle' => 'Proses & Bimbingan Skripsi',
+    'hasBack' => true,
+    'backUrl' => route('dashboard')
 ])
 
 @section('content')
-<div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4">
-    <div class="flex items-center justify-between gap-3 flex-wrap border-b border-slate-100 pb-4">
-        <div>
-            <h2 class="text-lg font-extrabold text-slate-800">Daftar Pemberitahuan</h2>
-            <p class="text-xs text-slate-500">Pembaruan status bab, catatan revisi, pengajuan bimbingan, dan pesan terbaru.</p>
-        </div>
-
-        @if($notifications->where('is_read', false)->count() > 0)
+<div class="space-y-4">
+    @if($notifications->where('is_read', false)->count() > 0)
+        <div class="flex justify-end">
             <form action="{{ route('notifications.read_all') }}" method="POST">
                 @csrf
-                <button type="submit" class="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-xl text-xs font-bold transition">
+                <button type="submit" class="px-4 py-2 bg-[#DDD7FA] hover:bg-[#DCD7FE] text-[#7B5EA7] rounded-xl text-xs font-bold transition shadow-sm">
                     Tandai Semua Dibaca
                 </button>
             </form>
-        @endif
-    </div>
+        </div>
+    @endif
 
     @forelse($notifications as $notif)
-        <div class="border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 {{ $notif->is_read ? 'border-slate-200 bg-white' : 'border-purple-300 bg-purple-50/50' }}">
-            <div class="space-y-1">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $notif->is_read ? 'bg-slate-100 text-slate-500' : 'bg-purple-600 text-white' }}">
-                        {{ $notif->is_read ? 'Sudah Dibaca' : 'Belum Dibaca' }}
-                    </span>
-                    <h3 class="text-sm font-bold text-slate-800">{{ $notif->title }}</h3>
-                    <span class="text-[11px] text-slate-400">&bull; {{ $notif->created_at->format('d-m-Y H:i') }} ({{ $notif->created_at->diffForHumans() }})</span>
-                </div>
-                <p class="text-xs text-slate-600 leading-relaxed">{{ $notif->message }}</p>
+        <div class="bg-white border border-[#e1e1e8] rounded-[24px] p-6 shadow-sm space-y-2 hover:border-[#9D62CC] transition">
+            <div class="flex items-center justify-between gap-4">
+                <h3 class="text-base font-extrabold text-[#4a4a5a]">{{ $notif->title }}</h3>
+                <span class="text-xs text-[#8a8a9d] font-medium whitespace-nowrap">
+                    {{ $notif->created_at->format('d-m-Y') }}
+                </span>
             </div>
 
-            <div class="flex items-center gap-2 shrink-0">
-                <form action="{{ route('notifications.read', $notif) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-bold transition {{ $notif->link ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700' }}">
-                        {{ $notif->link ? 'Buka' : 'Tandai Dibaca' }}
-                    </button>
-                </form>
+            @php
+                $senderName = null;
+                // If notification message contains actor or relation
+                if ($notif->actor) {
+                    $senderName = $notif->actor->name;
+                }
+            @endphp
+
+            @if($senderName)
+                <p class="text-xs text-[#4a4a5a]">
+                    <span class="font-medium text-[#6b6b7b]">Nama Dosen / Pengirim :</span> <strong>{{ $senderName }}</strong>
+                </p>
+            @endif
+
+            <p class="text-xs text-[#4a4a5a] leading-relaxed pt-1">
+                <span class="font-medium text-[#6b6b7b]">Catatan :</span> {{ $notif->message }}
+            </p>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold {{ $notif->is_read ? 'bg-[#f0eff4] text-[#8a8a9d]' : 'bg-[#DDD7FA] text-[#7B5EA7]' }}">
+                    {{ $notif->is_read ? 'Sudah Dibaca' : 'Belum Dibaca' }}
+                </span>
+
+                <div class="flex items-center gap-2">
+                    @if($notif->link)
+                        <a href="{{ $notif->link }}" class="px-3.5 py-1.5 bg-[#DDD7FA] hover:bg-[#DCD7FE] text-[#7B5EA7] font-bold text-xs rounded-xl transition">
+                            Lihat Rincian
+                        </a>
+                    @endif
+                    @if(!$notif->is_read)
+                        <form action="{{ route('notifications.read', $notif) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+                                Tandai Dibaca
+                            </button>
+                        </form>
+                    @endif
+                </div>
             </div>
         </div>
     @empty
-        <div class="text-center py-12 text-slate-400 text-xs">
+        <div class="bg-white border border-[#e1e1e8] rounded-[24px] p-12 text-center text-xs text-[#8a8a9d] shadow-sm">
             Belum ada pemberitahuan untuk Anda saat ini.
         </div>
     @endforelse
@@ -55,4 +79,3 @@
     </div>
 </div>
 @endsection
-

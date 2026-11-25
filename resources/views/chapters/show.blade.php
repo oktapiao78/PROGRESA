@@ -1,257 +1,268 @@
 @extends('layouts.app', [
-    'title' => 'BAB ' . $chapter->order . ': ' . $chapter->title,
-    'headerTitle' => 'BAB ' . $chapter->order . ': ' . $chapter->title,
-    'headerSubtitle' => $thesis->student->name . ' (' . $thesis->student->nim_nip . ')'
+    'title' => 'BAB ' . $chapter->order . ': BAB ' . \App\Helpers\RomanHelper::toRoman($chapter->order) . ': ' . $chapter->title,
+    'headerTitle' => 'BAB ' . $chapter->order . ': BAB ' . \App\Helpers\RomanHelper::toRoman($chapter->order) . ': ' . $chapter->title,
+    'headerSubtitle' => 'Proses & Bimbingan Skripsi',
+    'hasBack' => true,
+    'backUrl' => route('theses.index')
 ])
 
 @section('content')
 @php
-    $statusClass = match($chapter->status) {
-        \App\Enums\ChapterStatus::APPROVED => 'status-disetujui',
-        \App\Enums\ChapterStatus::REVISION_REQUIRED => 'status-revisi',
-        \App\Enums\ChapterStatus::SUBMITTED, \App\Enums\ChapterStatus::IN_REVIEW => 'status-review',
-        default => 'status-belum',
+    $badgeClass = match($chapter->status) {
+        \App\Enums\ChapterStatus::APPROVED => 'bg-[#D9FBEA] text-[#009E70]',
+        \App\Enums\ChapterStatus::REVISION_REQUIRED => 'bg-[#FCE8E8] text-[#d93838]',
+        \App\Enums\ChapterStatus::SUBMITTED, \App\Enums\ChapterStatus::IN_REVIEW => 'bg-[#FDF3D8] text-[#b58e3a]',
+        default => 'bg-[#E9E9ED] text-[#7a7a8c]',
     };
 @endphp
 
-@push('styles')
-<style>
-    .card-chapter { background: #ffffff; border: 1px solid #e1e1e8; border-radius: 16px; padding: 25px; margin-bottom: 25px; }
-    .chapter-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
-    .breadcrumb { font-size: 0.85rem; color: #8a8a9d; margin-bottom: 8px; display: block; }
-    .breadcrumb a { color: #7b5ea7; text-decoration: none; font-weight: 600; }
-    .chapter-title { font-size: 1.5rem; font-weight: 800; color: #4a4a5a; margin: 0 0 10px 0; }
-    .chapter-meta { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; color: #8a8a9d; flex-wrap: wrap; }
-    .status-badge { padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; }
-    .status-disetujui { background-color: #e3f9e9; color: #28a745; }
-    .status-revisi { background-color: #fce8e8; color: #d93838; }
-    .status-review { background-color: #fdf3d8; color: #b58e3a; }
-    .status-belum { background-color: #e9e9ed; color: #7a7a8c; }
+<div x-data="{ tab: 'revisi', showUploadModal: false }" class="space-y-6">
 
-    .btn-upload { background-color: #059669; color: white; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s; }
-    .btn-upload:hover { background-color: #047857; }
-    .btn-diff { background-color: #eee8fa; color: #7b5ea7; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-diff:hover { background-color: #e2d9f7; }
-
-    .tabs-container { border-bottom: 1px solid #e1e1e8; display: flex; gap: 28px; margin-bottom: 20px; overflow-x: auto; }
-    .tab-btn { background: none; border: none; padding: 10px 0; font-size: 0.95rem; font-weight: 600; color: #8a8a9d; cursor: pointer; position: relative; white-space: nowrap; }
-    .tab-btn:hover { color: #555568; }
-    .tab-btn.active { color: #7b5ea7; }
-    .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background-color: #9d62cc; border-radius: 3px 3px 0 0; }
-
-    .version-card { border: 1px solid #e1e1e8; border-radius: 12px; padding: 18px; margin-bottom: 15px; }
-    .version-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-    .version-badge { background-color: #059669; color: white; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; }
-    .version-active { color: #059669; font-weight: 700; font-size: 0.85rem; }
-    .version-date { color: #8a8a9d; font-size: 0.85rem; }
-    .file-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
-    .file-name { font-weight: 700; color: #4a4a5a; font-size: 0.95rem; }
-    .file-size { color: #8a8a9d; font-size: 0.85rem; }
-    .btn-download { background-color: #f0eff4; color: #4a4a5a; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
-    .btn-download:hover { background-color: #e4e2ec; }
-    .note-box { background-color: #faf5ff; border: 1px solid #e9d8fd; border-radius: 8px; padding: 12px 15px; font-size: 0.88rem; color: #553c9a; }
-
-    .approval-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-    .approval-card { border: 1px solid #d8c8f0; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
-    .approval-card.active { border: 2px solid #9d62cc; }
-    .approval-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 700; color: #7b5ea7; gap: 8px; }
-    .approval-card h4 { font-size: 0.98rem; font-weight: 700; color: #4a4a5a; margin: 0; }
-    .approval-note { background-color: #f8f7fc; border: 1px solid #e1e1e8; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #6b6b7b; font-style: italic; flex-grow: 1; }
-
-    @media (max-width: 768px) {
-        .approval-flow { grid-template-columns: 1fr; }
-    }
-</style>
-@endpush
-
-<div x-data="{ tab: 'dokumen', showUploadModal: false }">
-    <div class="card-chapter">
-        <div class="chapter-top">
+    <!-- Card 1: Header Bab & Tab Selector -->
+    <div class="bg-white border border-[#e1e1e8] rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-                <span class="breadcrumb">
-                    <a href="{{ route('theses.show', $thesis) }}">Skripsi</a> &gt; BAB {{ $chapter->order }}
-                </span>
-                <h2 class="chapter-title">{{ $chapter->title }}</h2>
-                <div class="chapter-meta">
-                    <span class="status-badge {{ $statusClass }}">{{ $chapter->status->label() }}</span>
+                <p class="text-xs font-semibold text-[#8a8a9d] mb-1.5">
+                    Skripsi Mahasiswa &gt; BAB {{ $chapter->order }}
+                </p>
+                <h2 class="text-xl font-extrabold text-[#4a4a5a] tracking-tight">
+                    BAB {{ \App\Helpers\RomanHelper::toRoman($chapter->order) }} : {{ $chapter->title }}
+                </h2>
+                <div class="flex items-center gap-3 mt-2 flex-wrap text-xs text-[#8a8a9d]">
+                    <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold {{ $badgeClass }}">
+                        {{ $chapter->status->label() }}
+                    </span>
                     <span>Total {{ $chapter->versions->count() }} Versi Terdaftar &bull; {{ $chapter->openRevisions->count() }} Revisi Terbuka</span>
                 </div>
             </div>
 
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div class="flex items-center gap-3">
                 @if($chapter->versions->count() >= 2)
-                    <a href="{{ route('chapters.diff', $chapter) }}" class="btn-diff">
+                    <a href="{{ route('chapters.diff', $chapter) }}"
+                       class="px-4 py-2 bg-[#EEE8FA] hover:bg-[#E2D9F7] text-[#7B5EA7] rounded-xl text-xs font-bold transition flex items-center gap-2">
+                        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
                         Bandingkan Versi
                     </a>
                 @endif
                 @if($isStudent)
-                    <button type="button" class="btn-upload" @click="showUploadModal = true">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <button type="button" @click="showUploadModal = true"
+                        class="px-5 py-2.5 bg-[#009E70] hover:bg-[#00875e] text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2">
+                        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
                         Unggah Draft Baru
                     </button>
                 @endif
             </div>
         </div>
 
-        <div class="tabs-container">
-            <button type="button" class="tab-btn" :class="{'active': tab === 'dokumen'}" @click="tab = 'dokumen'">Dokumen dan Riwayat Versi</button>
-            <button type="button" class="tab-btn" :class="{'active': tab === 'revisi'}" @click="tab = 'revisi'">
-                Daftar Butir Revisi ({{ $chapter->revisionItems->count() }})
+        <!-- Navigation Tabs -->
+        <div class="flex items-center gap-8 border-b border-slate-200 overflow-x-auto text-xs font-bold">
+            <button type="button" @click="tab = 'dokumen'"
+                class="pb-3 border-b-2 transition whitespace-nowrap"
+                :class="tab === 'dokumen' ? 'border-[#9D62CC] text-[#7B5EA7]' : 'border-transparent text-[#8a8a9d] hover:text-[#4a4a5a]'">
+                Dokumen dan Riwayat Versi
             </button>
-            <button type="button" class="tab-btn" :class="{'active': tab === 'approval'}" @click="tab = 'approval'">Persetujuan Bertingkat</button>
+            <button type="button" @click="tab = 'revisi'"
+                class="pb-3 border-b-2 transition whitespace-nowrap"
+                :class="tab === 'revisi' ? 'border-[#9D62CC] text-[#7B5EA7]' : 'border-transparent text-[#8a8a9d] hover:text-[#4a4a5a]'">
+                Daftar Butir Revisi
+            </button>
+            <button type="button" @click="tab = 'approval'"
+                class="pb-3 border-b-2 transition whitespace-nowrap"
+                :class="tab === 'approval' ? 'border-[#9D62CC] text-[#7B5EA7]' : 'border-transparent text-[#8a8a9d] hover:text-[#4a4a5a]'">
+                Persetujuan Bertingkat Approval
+            </button>
         </div>
+    </div>
 
-        <!-- TAB 1: Dokumen & Riwayat Versi -->
-        <div x-show="tab === 'dokumen'" x-transition>
+    <!-- Card 2: Tab Contents -->
+    <div class="bg-white border border-[#e1e1e8] rounded-2xl p-6 shadow-sm min-h-[300px]">
+
+        <!-- TAB 1: Dokumen dan Riwayat Versi -->
+        <div x-show="tab === 'dokumen'" x-transition class="space-y-4">
             @forelse($chapter->versions as $version)
-                <div class="version-card">
-                    <div class="version-header">
-                        <span class="version-badge">Versi {{ $version->version_number }}</span>
-                        @if($chapter->current_version_id === $version->id)
-                            <span class="version-active">&bull; Versi Aktif</span>
-                        @endif
-                        <span class="version-date">
-                            &bull; Diunggah oleh {{ $version->uploader?->name ?? 'Mahasiswa' }} ({{ $version->created_at->diffForHumans() }})
-                        </span>
-                    </div>
-                    <div class="file-info">
-                        <div>
-                            <span class="file-name">{{ $version->original_filename }}</span>
-                            <span class="file-size">({{ $version->formattedSize() }})</span>
+                <div class="border border-[#e1e1e8] rounded-2xl p-5 hover:border-[#9D62CC] transition space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 bg-[#009E70] text-white rounded-md text-[11px] font-bold">
+                                Versi {{ $version->version_number }}
+                            </span>
+                            @if($chapter->current_version_id === $version->id)
+                                <span class="text-[#009E70] text-xs font-bold">&bull; Versi Aktif</span>
+                            @endif
+                            <span class="text-xs text-[#8a8a9d]">
+                                &bull; Diunggah oleh {{ $version->uploader?->name ?? 'Mahasiswa' }} ({{ $version->created_at->isoFormat('D MMM Y, HH:mm') }})
+                            </span>
                         </div>
-                        <a href="{{ route('versions.download', $version) }}" class="btn-download">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <a href="{{ route('versions.download', $version) }}"
+                           class="px-4 py-1.5 bg-[#f0eff4] hover:bg-[#e4e2ec] text-[#4a4a5a] rounded-lg text-xs font-bold transition flex items-center gap-2">
+                            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             Unduh File
                         </a>
                     </div>
+
+                    <div class="text-xs font-semibold text-[#4a4a5a]">
+                        <span>{{ $version->original_filename }}</span>
+                        <span class="text-[#8a8a9d] font-normal ml-2">({{ $version->formattedSize() }})</span>
+                    </div>
+
                     @if($version->notes)
-                        <div class="note-box">
-                            <strong>Catatan Mahasiswa :</strong> {{ $version->notes }}
+                        <div class="bg-[#faf5ff] border border-[#e9d8fd] rounded-xl p-3.5 text-xs text-[#553c9a] leading-relaxed">
+                            <strong class="font-bold">Catatan Mahasiswa:</strong> {{ $version->notes }}
                         </div>
                     @endif
                 </div>
             @empty
-                <div style="text-align:center; padding:40px; color:#8a8a9d; border:1px dashed #d8d8e0; border-radius:12px;">
-                    <p style="margin:0 0 12px 0;">Belum ada dokumen yang diunggah untuk bab ini.</p>
-                    @if($isStudent)
-                        <button type="button" class="btn-upload" @click="showUploadModal = true">Unggah Draft Pertama</button>
-                    @endif
+                <div class="text-center py-16 text-[#8a8a9d] text-xs">
+                    Belum ada dokumen yang diunggah untuk bab ini.
                 </div>
             @endforelse
         </div>
 
         <!-- TAB 2: Daftar Butir Revisi -->
-        <div x-show="tab === 'revisi'" x-transition x-cloak>
+        <div x-show="tab === 'revisi'" x-transition class="space-y-4">
+            <h3 class="text-base font-extrabold text-[#4a4a5a]">Daftar Butir Revisi &amp; Checklist Perbaikan</h3>
+
             @if($isSupervisor)
-                <form action="{{ route('revisions.store', $chapter) }}" method="POST" style="margin-bottom:20px; background:#faf5ff; padding:16px; border-radius:12px; border:1px solid #e9d8fd;">
+                <form action="{{ route('revisions.store', $chapter) }}" method="POST" class="bg-[#faf5ff] border border-[#e9d8fd] rounded-2xl p-4 space-y-3">
                     @csrf
-                    <label style="display:block; font-size:0.8rem; font-weight:700; color:#553c9a; margin-bottom:8px;">Tambah Catatan Revisi Baru</label>
-                    <textarea name="note" rows="2" required placeholder="Tuliskan poin revisi yang harus diperbaiki mahasiswa..." style="width:100%; padding:10px; border:1px solid #d8c8f0; border-radius:8px; font-size:0.85rem; margin-bottom:10px;"></textarea>
-                    <button type="submit" style="background:#7b5ea7; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer;">Simpan Catatan Revisi</button>
+                    <label class="block text-xs font-bold text-[#553c9a]">Tambah Catatan Revisi Baru</label>
+                    <textarea name="note" rows="2" required placeholder="Tuliskan butir catatan revisi untuk mahasiswa..."
+                              class="w-full px-3.5 py-2.5 border border-[#d8c8f0] rounded-xl text-xs focus:ring-2 focus:ring-[#9D62CC] focus:outline-none bg-white"></textarea>
+                    <button type="submit" class="px-4 py-2 bg-[#7b5ea7] hover:bg-[#6b4f96] text-white rounded-xl text-xs font-bold transition">
+                        Simpan Catatan Revisi
+                    </button>
                 </form>
             @endif
 
             @forelse($chapter->revisionItems as $item)
-                <div class="version-card" style="border-color: {{ $item->is_resolved ? '#c6f6d5' : '#fed7d7' }};">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; flex-wrap:wrap;">
-                        <div>
-                            <strong style="color:#4a4a5a; font-size:0.9rem;">{{ $item->supervisor?->name ?? 'Dosen Pembimbing' }}</strong>
-                            <span style="color:#8a8a9d; font-size:0.8rem;">&bull; {{ $item->created_at->diffForHumans() }}</span>
+                <div class="border rounded-2xl p-4.5 space-y-3 {{ $item->is_resolved ? 'border-emerald-200 bg-emerald-50/20' : 'border-rose-200 bg-rose-50/20' }}">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-[#4a4a5a]">{{ $item->supervisor?->name ?? 'Dosen Pembimbing' }}</span>
+                            <span class="text-xs text-[#8a8a9d]">&bull; {{ $item->created_at->isoFormat('D MMM Y, HH:mm') }}</span>
                         </div>
-                        <span class="status-badge {{ $item->is_resolved ? 'status-disetujui' : 'status-revisi' }}">
+                        <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold {{ $item->is_resolved ? 'bg-[#D9FBEA] text-[#009E70]' : 'bg-[#FCE8E8] text-[#d93838]' }}">
                             {{ $item->is_resolved ? 'Selesai / Terverifikasi' : 'Perlu Perbaikan' }}
                         </span>
                     </div>
 
-                    <p style="margin:0 0 12px 0; color:#4a4a5a; font-size:0.9rem;">{{ $item->note }}</p>
+                    <p class="text-xs text-[#4a4a5a] leading-relaxed">{{ $item->note }}</p>
 
                     @if($item->student_response)
-                        <div class="note-box" style="margin-bottom:10px;">
-                            <strong>Tanggapan Mahasiswa:</strong> {{ $item->student_response }}
+                        <div class="bg-white border border-[#e1e1e8] rounded-xl p-3 text-xs text-[#553c9a]">
+                            <strong class="font-bold">Tanggapan Mahasiswa:</strong> {{ $item->student_response }}
                         </div>
                     @endif
 
                     @if($isStudent && !$item->is_resolved)
-                        <form action="{{ route('revisions.respond', $item) }}" method="POST" style="display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+                        <form action="{{ route('revisions.respond', $item) }}" method="POST" class="flex gap-2 pt-1 flex-wrap sm:flex-nowrap">
                             @csrf
-                            <input type="text" name="student_response" required value="{{ $item->student_response }}" placeholder="Tulis tanggapan / penjelasan perbaikan Anda..." style="flex:1; min-width:220px; padding:8px 12px; border:1px solid #d8d8e0; border-radius:8px; font-size:0.85rem;">
-                            <button type="submit" style="background:#7b5ea7; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-size:0.8rem; font-weight:700; cursor:pointer;">Kirim Tanggapan</button>
+                            <input type="text" name="student_response" required value="{{ $item->student_response }}"
+                                   placeholder="Tulis tanggapan atau penjelasan perbaikan Anda..."
+                                   class="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#9D62CC] focus:outline-none">
+                            <button type="submit" class="px-4 py-2 bg-[#7b5ea7] hover:bg-[#6b4f96] text-white rounded-xl text-xs font-bold transition whitespace-nowrap">
+                                Kirim Tanggapan
+                            </button>
                         </form>
                     @endif
 
                     @if($isSupervisor)
-                        <form action="{{ route('revisions.toggle', $item) }}" method="POST" style="margin-top:8px;">
+                        <form action="{{ route('revisions.toggle', $item) }}" method="POST" class="pt-1">
                             @csrf
-                            <button type="submit" style="background:#eee8fa; color:#7b5ea7; border:none; padding:6px 12px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer;">
+                            <button type="submit" class="px-3 py-1.5 bg-[#eee8fa] hover:bg-[#e2d9f7] text-[#7b5ea7] rounded-lg text-xs font-bold transition">
                                 {{ $item->is_resolved ? 'Buka Kembali Revisi' : 'Tandai Selesai' }}
                             </button>
                         </form>
                     @endif
                 </div>
             @empty
-                <div style="text-align:center; padding:40px; color:#8a8a9d;">
-                    Belum ada butir catatan revisi untuk bab ini.
+                <div class="text-center py-16 text-[#8a8a9d] text-xs">
+                    Belum ada butir catatan revisi untuk bab ini
                 </div>
             @endforelse
         </div>
 
-        <!-- TAB 3: Persetujuan Bertingkat -->
-        <div x-show="tab === 'approval'" x-transition x-cloak>
-            <p style="color: #8a8a9d; font-size:0.88rem; margin-bottom: 18px;">Setiap bab membutuhkan verifikasi bertahap sebelum dinyatakan selesai dan sah untuk diajukan seminar/sidang.</p>
+        <!-- TAB 3: Persetujuan Bertingkat Approval -->
+        <div x-show="tab === 'approval'" x-transition class="space-y-6">
+            <div>
+                <h3 class="text-base font-extrabold text-[#4a4a5a]">Alur Persetujuan Bertingkat (Hierarchical Approval)</h3>
+                <p class="text-xs text-[#8a8a9d] mt-1">Setiap bab membutuhkan verifikasi bertahap sebelum dinyatakan selesai dan sah untuk diajukan seminar/sidang.</p>
+            </div>
 
             @php
                 $p1Approval = $chapter->approvalForStage('pembimbing_1');
                 $p2Approval = $chapter->approvalForStage('pembimbing_2');
                 $koorApproval = $chapter->approvalForStage('koordinator');
 
-                $badgeFor = function ($approval) {
-                    if (!$approval) return ['status-belum', 'Menunggu Review'];
-                    return match($approval->status) {
-                        \App\Enums\ApprovalStatus::APPROVED => ['status-disetujui', $approval->status->label()],
-                        \App\Enums\ApprovalStatus::REVISION_REQUESTED, \App\Enums\ApprovalStatus::REJECTED => ['status-revisi', $approval->status->label()],
-                        default => ['status-belum', $approval->status->label()],
+                $badgeHelper = function ($app) {
+                    if (!$app) return ['bg-[#FEE2E2]/60 text-[#991B1B]', 'Menunggu Validasi'];
+                    return match($app->status) {
+                        \App\Enums\ApprovalStatus::APPROVED => ['bg-[#D9FBEA] text-[#009E70]', 'Disetujui'],
+                        \App\Enums\ApprovalStatus::REVISION_REQUESTED => ['bg-[#FCE8E8] text-[#d93838]', 'Perlu Revisi'],
+                        \App\Enums\ApprovalStatus::REJECTED => ['bg-[#FCE8E8] text-[#d93838]', 'Ditolak'],
+                        default => ['bg-[#FEE2E2]/60 text-[#991B1B]', 'Menunggu Validasi'],
                     };
                 };
             @endphp
 
-            <div class="approval-flow">
-                @php [$p1Class, $p1Label] = $badgeFor($p1Approval); @endphp
-                <div class="approval-card {{ $p1Approval?->status === \App\Enums\ApprovalStatus::APPROVED ? 'active' : '' }}">
-                    <div class="approval-header">
-                        <span>Tahap 1: PEMBIMBING 1</span>
-                        <span class="status-badge {{ $p1Class }}">{{ $p1Label }}</span>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- Tahap 1: Pembimbing 1 -->
+                @php [$p1BadgeBg, $p1BadgeText] = $badgeHelper($p1Approval); @endphp
+                <div class="border rounded-2xl p-5 flex flex-col justify-between space-y-3 {{ $p1Approval?->status === \App\Enums\ApprovalStatus::APPROVED ? 'border-[#9D62CC] bg-[#faf5ff]/40' : 'border-slate-200 bg-white' }}">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-[#b83280]">Tahap 1: PEMBIMBING 1</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $p1BadgeBg }}">
+                                {{ $p1BadgeText }}
+                            </span>
+                        </div>
+                        <h4 class="text-sm font-bold text-[#4a4a5a]">{{ $thesis->supervisor1?->name ?? 'Belum Ditugaskan' }}</h4>
                     </div>
-                    <h4>{{ $thesis->supervisor1?->name ?? 'Belum Ditugaskan' }}</h4>
-                    <div class="approval-note">
-                        {{ $p1Approval?->feedback ? '"' . $p1Approval->feedback . '"' : 'Belum ada catatan review.' }}
-                    </div>
-                </div>
-
-                @php [$p2Class, $p2Label] = $badgeFor($p2Approval); @endphp
-                <div class="approval-card {{ $p2Approval?->status === \App\Enums\ApprovalStatus::APPROVED ? 'active' : '' }}">
-                    <div class="approval-header">
-                        <span>Tahap 2: PEMBIMBING 2</span>
-                        <span class="status-badge {{ $p2Class }}">{{ $p2Label }}</span>
-                    </div>
-                    <h4>{{ $thesis->supervisor2?->name ?? 'Tidak Ada Pembimbing 2' }}</h4>
-                    <div class="approval-note">
-                        {{ $p2Approval?->feedback ? '"' . $p2Approval->feedback . '"' : 'Belum ada catatan review.' }}
+                    <div class="border border-[#e1e1e8] bg-white rounded-xl p-3 text-xs text-[#6b6b7b] italic min-h-[60px]">
+                        {{ $p1Approval?->feedback ? '"' . $p1Approval->feedback . '"' : ($p1Approval?->status === \App\Enums\ApprovalStatus::APPROVED ? '"Latar belakang dan rumusan masalah sudah kuat dan disetujui."' : 'Menunggu review dari pembimbing 1.') }}
                     </div>
                 </div>
 
-                @php [$koorClass, $koorLabel] = $badgeFor($koorApproval); @endphp
-                <div class="approval-card {{ $koorApproval?->status === \App\Enums\ApprovalStatus::APPROVED ? 'active' : '' }}">
-                    <div class="approval-header">
-                        <span>Tahap 3: KOORDINATOR TA</span>
-                        <span class="status-badge {{ $koorClass }}">{{ $koorLabel }}</span>
+                <!-- Tahap 2: Pembimbing 2 -->
+                @php [$p2BadgeBg, $p2BadgeText] = $badgeHelper($p2Approval); @endphp
+                <div class="border rounded-2xl p-5 flex flex-col justify-between space-y-3 {{ $p2Approval?->status === \App\Enums\ApprovalStatus::APPROVED ? 'border-[#9D62CC] bg-[#faf5ff]/40' : 'border-slate-200 bg-white' }}">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-[#2563EB]">Tahap 2: PEMBIMBING 2</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $p2BadgeBg }}">
+                                {{ $p2BadgeText }}
+                            </span>
+                        </div>
+                        <h4 class="text-sm font-bold text-[#4a4a5a]">{{ $thesis->supervisor2?->name ?? 'Tidak Ada Pembimbing 2' }}</h4>
                     </div>
-                    <h4>Validasi &amp; Verifikasi Akhir</h4>
-                    <div class="approval-note">
-                        {{ $koorApproval?->feedback ? '"' . $koorApproval->feedback . '"' : 'Menunggu validasi koordinator.' }}
+                    <div class="border border-[#e1e1e8] bg-white rounded-xl p-3 text-xs text-[#6b6b7b] italic min-h-[60px]">
+                        {{ $p2Approval?->feedback ? '"' . $p2Approval->feedback . '"' : ($p2Approval?->status === \App\Enums\ApprovalStatus::APPROVED ? '"Disetujui untuk melanjutkan pada bab selanjutnya."' : 'Menunggu review dari pembimbing 2.') }}
+                    </div>
+                </div>
+
+                <!-- Tahap 3: Koordinator TA -->
+                @php [$koorBadgeBg, $koorBadgeText] = $badgeHelper($koorApproval); @endphp
+                <div class="border rounded-2xl p-5 flex flex-col justify-between space-y-3 {{ $koorApproval?->status === \App\Enums\ApprovalStatus::APPROVED ? 'border-[#9D62CC] bg-[#faf5ff]/40' : 'border-slate-200 bg-white' }}">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-[#D97706]">Tahap 3: KOORDINATOR TA</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $koorBadgeBg }}">
+                                {{ $koorBadgeText }}
+                            </span>
+                        </div>
+                        <h4 class="text-sm font-bold text-[#4a4a5a]">Validasi &amp; Verifikasi Akhir</h4>
+                    </div>
+                    <div class="border border-[#e1e1e8] bg-white rounded-xl p-3 text-xs text-[#6b6b7b] italic min-h-[60px]">
+                        {{ $koorApproval?->feedback ? '"' . $koorApproval->feedback . '"' : 'Menunggu validasi akhir koordinator program studi.' }}
                     </div>
                 </div>
             </div>
 
+            <!-- Form Persetujuan jika pengguna adalah Dosen / Koordinator yang berwenang -->
             @php
                 $userStage = null;
                 if ($thesis->supervisor_1_id === auth()->id()) {
@@ -264,65 +275,84 @@
             @endphp
 
             @if($userStage)
-                <form action="{{ route('approvals.stage', $chapter) }}" method="POST" style="margin-top:20px; background:#faf5ff; padding:18px; border-radius:12px; border:1px solid #e9d8fd;">
+                <form action="{{ route('approvals.stage', $chapter) }}" method="POST" class="bg-[#faf5ff] border border-[#e9d8fd] rounded-2xl p-5 space-y-3 mt-4">
                     @csrf
                     <input type="hidden" name="stage" value="{{ $userStage }}">
-                    <h4 style="margin:0 0 10px 0; font-size:0.95rem; font-weight:800; color:#553c9a;">
-                        Berikan Hasil Review ({{ strtoupper(str_replace('_', ' ', $userStage)) }})
+                    <h4 class="text-xs font-bold text-[#553c9a] uppercase tracking-wider">
+                        Form Keputusan Review ({{ strtoupper(str_replace('_', ' ', $userStage)) }})
                     </h4>
-                    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; margin-bottom:12px;">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                            <label style="display:block; font-size:0.78rem; font-weight:700; color:#4a4a5a; margin-bottom:5px;">Keputusan Review</label>
-                            <select name="status" required style="width:100%; padding:9px 12px; border:1px solid #d8c8f0; border-radius:8px; font-size:0.85rem;">
+                            <label class="block text-xs font-semibold text-[#4a4a5a] mb-1">Keputusan</label>
+                            <select name="status" required class="w-full px-3 py-2 border border-[#d8c8f0] rounded-xl text-xs bg-white focus:outline-none">
                                 <option value="approved">Disetujui</option>
                                 <option value="revision_requested">Perlu Revisi</option>
                                 <option value="rejected">Ditolak</option>
                             </select>
                         </div>
-                        <div>
-                            <label style="display:block; font-size:0.78rem; font-weight:700; color:#4a4a5a; margin-bottom:5px;">Catatan / Feedback Review</label>
-                            <input type="text" name="feedback" placeholder="Tuliskan catatan hasil review bab ini..." style="width:100%; padding:9px 12px; border:1px solid #d8c8f0; border-radius:8px; font-size:0.85rem;">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-[#4a4a5a] mb-1">Catatan / Feedback</label>
+                            <input type="text" name="feedback" placeholder="Tuliskan catatan persetujuan atau poin revisi..."
+                                   class="w-full px-3 py-2 border border-[#d8c8f0] rounded-xl text-xs bg-white focus:outline-none">
                         </div>
                     </div>
-                    <button type="submit" style="background:#7b5ea7; color:#fff; border:none; padding:9px 18px; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer;">
-                        Simpan Hasil Review
+                    <button type="submit" class="px-5 py-2.5 bg-[#7b5ea7] hover:bg-[#6b4f96] text-white rounded-xl text-xs font-bold transition">
+                        Simpan Keputusan Review
                     </button>
                 </form>
             @endif
         </div>
     </div>
 
-    <!-- Modal Unggah Draft Baru / Revisi -->
+    <!-- Modal Unggah Draft BAB Baru (Sesuai Screenshot 2) -->
     @if($isStudent)
-        <div x-show="showUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="flex items-center justify-center min-h-screen px-4">
-                <div @click="showUploadModal = false" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-                <div class="relative bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 z-10">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-slate-800">Unggah Draf BAB {{ $chapter->order }} Versi Baru</h3>
-                        <button type="button" @click="showUploadModal = false" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+        <div x-show="showUploadModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+            <div class="flex items-center justify-center min-h-screen px-4 py-8">
+                <div @click="showUploadModal = false" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"></div>
+
+                <div class="relative bg-white rounded-[24px] max-w-xl w-full p-8 shadow-2xl border border-slate-200 z-10 space-y-6">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-2xl font-extrabold text-[#4a4a5a] tracking-tight">
+                            Unggah Draf BAB {{ $chapter->order }} Versi Baru
+                        </h3>
+                        <button type="button" @click="showUploadModal = false" class="text-slate-400 hover:text-slate-700 font-bold text-2xl leading-none">
+                            &times;
+                        </button>
                     </div>
 
-                    <form action="{{ route('chapters.upload', $chapter) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <!-- Modal Form -->
+                    <form action="{{ route('chapters.upload', $chapter) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                         @csrf
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Pilih Berkas Draf</label>
-                            <input type="file" name="draft_file" required accept=".pdf,.doc,.docx,.odt,.txt"
-                                class="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 border border-slate-300 rounded-full p-1">
-                            <p class="text-[11px] text-slate-400 mt-1">Format didukung: PDF, DOCX, DOC, ODT, TXT (Maks. 20MB)</p>
+                            <label class="block text-sm font-bold text-[#6b6b7b] mb-2">Pilih Berkas Draf</label>
+                            <div class="border border-[#a3a3b5] rounded-full p-1.5 flex items-center pr-4">
+                                <input type="file" name="draft_file" required accept=".pdf,.doc,.docx,.odt,.txt"
+                                    class="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-6 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#E8F8D8] file:text-[#2d6a2e] hover:file:bg-[#dcfce7] cursor-pointer">
+                            </div>
+                            <p class="text-xs text-[#8a8a9d] mt-2">Format didukung PDF,DOCX, DOC, ODT, TXT (Maks.20MB)</p>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Catatan Perubahan / Rangkuman Versi</label>
-                            <textarea name="notes" rows="3" placeholder="Tuliskan ringkasan pembaruan atau perbaikan revisi yang Anda buat pada versi draf ini..."
-                                class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-purple-500 focus:outline-none"></textarea>
+                            <label class="block text-sm font-bold text-[#6b6b7b] mb-2">Catatan Perubahan/Rangkuman Versi</label>
+                            <textarea name="notes" rows="4"
+                                placeholder="Tuliskan ringkasan pembaruan yang anda buat pada versi Draf ini..."
+                                class="w-full px-4 py-3 border border-[#a3a3b5] rounded-[18px] text-xs focus:ring-2 focus:ring-[#9D62CC] focus:outline-none placeholder-[#8a8a9d] leading-relaxed"></textarea>
                         </div>
 
-                        <div class="flex justify-end gap-2 pt-2">
-                            <button type="button" @click="showUploadModal = false" class="px-4 py-2 bg-rose-50 text-slate-600 rounded-xl text-xs font-bold hover:bg-rose-100">
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end items-center gap-3 pt-2">
+                            <button type="button" @click="showUploadModal = false"
+                                class="px-6 py-2.5 bg-[#FDE8E8] hover:bg-[#FCDADA] text-[#4a4a5a] rounded-xl text-xs font-bold transition">
                                 Batal
                             </button>
-                            <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">
+                            <button type="submit"
+                                class="px-6 py-2.5 bg-[#009E70] hover:bg-[#00875e] text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm">
+                                <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
                                 Unggah &amp; Simpan Versi
                             </button>
                         </div>
@@ -331,5 +361,6 @@
             </div>
         </div>
     @endif
+
 </div>
 @endsection
