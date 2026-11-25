@@ -17,3 +17,18 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Environment files
+/.env
+/.env.*
+!/.env.example
+
+# Laravel logs
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# IDE and OS
+.DS_Store
+Thumbs.db
