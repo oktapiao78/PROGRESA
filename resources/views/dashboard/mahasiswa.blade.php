@@ -87,7 +87,7 @@
         <section class="card" style="text-align: center; padding: 50px 20px;">
             <h2 class="section-title">Belum Ada Data Skripsi Terdaftar</h2>
             <p class="section-desc" style="margin-bottom: 24px;">
-                Data tugas akhir / skripsi Anda belum didaftarkan oleh Koordinator TA atau Admin. Silakan hubungi koordinator program studi Anda.
+                Data tugas akhir / skripsi Anda belum didaftarkan. Silakan hubungi dosen pembimbing Anda.
             </p>
             <a href="{{ route('profile.mahasiswa') }}" class="btn-outline" style="max-width: 240px; margin: 0 auto;">Lihat Profil Mahasiswa</a>
         </section>
@@ -160,7 +160,7 @@
             </div>
 
             <div class="grid-cards">
-                @foreach($thesis->chapters->take(4) as $bab)
+                @foreach($thesis->chapters as $bab)
                     @php
                         $statusClass = match($bab->status_enum) {
                             \App\Enums\ChapterStatus::APPROVED => 'status-green',
@@ -217,6 +217,38 @@
                 <div class="agenda-box" style="text-align:center; color:#8a8a9d; padding: 24px;">
                     Belum ada sesi bimbingan terjadwal saat ini.
                 </div>
+            @endforelse
+        </section>
+
+        <section class="card agenda-card">
+            <div style="margin-bottom:16px;">
+                <h2 class="section-title">Notifikasi Terbaru</h2>
+                <p class="section-desc">Review, revisi, dan persetujuan dari dosen pembimbing Anda.</p>
+            </div>
+            @forelse($notifications as $notification)
+                <div class="agenda-box" style="background: {{ $notification->is_read ? '#fff' : '#faf5ff' }};">
+                    <strong style="color:#4a4a5a;">{{ $notification->title }}</strong>
+                    <p>{{ $notification->message }}</p>
+                    <small style="color:#8a8a9d;">{{ $notification->created_at->diffForHumans() }} · {{ $notification->is_read ? 'Sudah dibaca' : 'Belum dibaca' }}</small>
+                </div>
+            @empty
+                <div class="agenda-box" style="text-align:center; color:#8a8a9d;">Belum ada notifikasi.</div>
+            @endforelse
+        </section>
+
+        <section class="card agenda-card">
+            <div style="margin-bottom:16px;">
+                <h2 class="section-title">Riwayat Bimbingan</h2>
+                <p class="section-desc">Catatan sesi bimbingan yang telah selesai.</p>
+            </div>
+            @forelse($completedSessions as $session)
+                <div class="agenda-box">
+                    <h4>{{ $session->topic }} · {{ $session->supervisor?->name }}</h4>
+                    <p>{{ $session->meeting_summary ?: 'Belum ada ringkasan.' }}</p>
+                    @if($session->action_items)<p><strong>Tindak lanjut:</strong> {{ $session->action_items }}</p>@endif
+                </div>
+            @empty
+                <div class="agenda-box" style="text-align:center; color:#8a8a9d;">Belum ada riwayat bimbingan.</div>
             @endforelse
         </section>
     @endif

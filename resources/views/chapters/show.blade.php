@@ -139,7 +139,7 @@
             @endif
 
             @forelse($chapter->revisionItems as $item)
-                <div class="border rounded-2xl p-4.5 space-y-3 {{ $item->is_resolved ? 'border-emerald-200 bg-emerald-50/20' : 'border-rose-200 bg-rose-50/20' }}">
+                <div class="border rounded-2xl p-5 space-y-4 {{ $item->is_resolved ? 'border-emerald-200 bg-emerald-50/20' : 'border-rose-200 bg-rose-50/20' }}">
                     <div class="flex items-center justify-between gap-2 flex-wrap">
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-bold text-[#4a4a5a]">{{ $item->supervisor?->name ?? 'Dosen Pembimbing' }}</span>
@@ -269,8 +269,6 @@
                     $userStage = 'pembimbing_1';
                 } elseif ($thesis->supervisor_2_id === auth()->id()) {
                     $userStage = 'pembimbing_2';
-                } elseif (auth()->user()->isKoordinator()) {
-                    $userStage = 'koordinator';
                 }
             @endphp
 

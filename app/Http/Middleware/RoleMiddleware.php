@@ -26,13 +26,8 @@ class RoleMiddleware
             return redirect()->route('login')->withErrors(['login' => 'Akun Anda telah dinonaktifkan oleh administrator.']);
         }
 
-        // Admin can access everything
-        if ($user->isAdmin()) {
-            return $next($request);
-        }
-
         foreach ($roles as $role) {
-            if ($user->role->value === $role) {
+            if (in_array($role, ['mahasiswa', 'dosen'], true) && $user->role->value === $role) {
                 return $next($request);
             }
         }

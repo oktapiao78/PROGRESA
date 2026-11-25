@@ -9,6 +9,7 @@ use App\Models\ChapterApproval;
 use App\Models\ThesisChapter;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class ApprovalWorkflowService
 {
@@ -25,14 +26,14 @@ class ApprovalWorkflowService
         $thesis = $chapter->thesis;
 
         // Verify approver matches stage
-        if ($stage === 'pembimbing_1' && $thesis->supervisor_1_id !== $approver->id && !$approver->isAdmin()) {
+        if ($stage === 'pembimbing_1' && $thesis->supervisor_1_id !== $approver->id) {
             throw ValidationException::withMessages(['stage' => 'Anda bukan Pembimbing 1 untuk mahasiswa ini.']);
         }
-        if ($stage === 'pembimbing_2' && $thesis->supervisor_2_id !== $approver->id && !$approver->isAdmin()) {
+        if ($stage === 'pembimbing_2' && $thesis->supervisor_2_id !== $approver->id) {
             throw ValidationException::withMessages(['stage' => 'Anda bukan Pembimbing 2 untuk mahasiswa ini.']);
         }
-        if ($stage === 'koordinator' && !$approver->isKoordinator() && !$approver->isAdmin()) {
-            throw ValidationException::withMessages(['stage' => 'Hanya Koordinator TA atau Admin yang dapat melakukan approval tahap ini.']);
+        if (!in_array($stage, ['pembimbing_1', 'pembimbing_2'], true)) {
+            throw ValidationException::withMessages(['stage' => 'Tahap approval hanya tersedia untuk Pembimbing 1 dan Pembimbing 2.']);
         }
 
         // If approving, ensure no open revision items exist
@@ -45,34 +46,20 @@ class ApprovalWorkflowService
             }
         }
 
-        $approval = ChapterApproval::updateOrCreate(
-            [
-                'thesis_chapter_id' => $chapter->id,
-                'stage' => $stage,
-            ],
-            [
-                'approver_id' => $approver->id,
-                'status' => $status,
-                'feedback' => $feedback,
-                'action_date' => now(),
-            ]
-        );
+        $approval = DB::transaction(function () use ($chapter, $stage, $approver, $status, $feedback, $thesis) {
+            $approval = ChapterApproval::updateOrCreate(
+                ['thesis_chapter_id' => $chapter->id, 'stage' => $stage],
+                ['approver_id' => $approver->id, 'status' => $status, 'feedback' => $feedback, 'action_date' => now()]
+            );
 
-        // Update chapter status
-        if ($status === ApprovalStatus::REVISION_REQUESTED) {
-            $chapter->update(['status' => ChapterStatus::REVISION_REQUIRED]);
-        } elseif ($status === ApprovalStatus::APPROVED) {
-            if ($chapter->isFullyApproved()) {
-                $chapter->update(['status' => ChapterStatus::APPROVED]);
-            } else {
-                $chapter->update(['status' => ChapterStatus::IN_REVIEW]);
+            if ($status === ApprovalStatus::REVISION_REQUESTED || $status === ApprovalStatus::REJECTED) {
+                $chapter->update(['status' => ChapterStatus::REVISION_REQUIRED]);
+            } elseif ($status === ApprovalStatus::APPROVED) {
+                $chapter->update(['status' => $chapter->fresh()->isFullyApproved() ? ChapterStatus::APPROVED : ChapterStatus::IN_REVIEW]);
             }
-        } elseif ($status === ApprovalStatus::REJECTED) {
-            $chapter->update(['status' => ChapterStatus::REVISION_REQUIRED]);
-        }
-
-        // Recalculate parent thesis progress
-        $thesis->recalculateProgress();
+            $thesis->recalculateProgress();
+            return $approval;
+        });
 
         // Log audit
         AuditLog::log("APPROVAL_{$stage}_{$status->value}", $chapter, "Status: {$status->label()}. Catatan: {$feedback}");

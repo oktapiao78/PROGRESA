@@ -12,6 +12,7 @@ use App\Services\DocumentStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class ChapterController extends Controller
@@ -33,7 +34,7 @@ class ChapterController extends Controller
         // Verify permission
         $isStudent = $thesis->student_id === $user->id;
         $isSupervisor = $thesis->isSupervisor($user);
-        $isStaff = $user->isKoordinator() || $user->isKaprodi() || $user->isAdmin();
+        $isStaff = false;
 
         if (!($isStudent || $isSupervisor || $isStaff)) {
             abort(403, 'Anda tidak memiliki hak akses ke bab ini.');
@@ -57,7 +58,7 @@ class ChapterController extends Controller
         $user = auth()->user();
         $thesis = $chapter->thesis;
 
-        if ($thesis->student_id !== $user->id && !$user->isAdmin()) {
+        if ($thesis->student_id !== $user->id) {
             abort(403, 'Hanya mahasiswa pemilik skripsi yang dapat mengunggah draf bab.');
         }
 
@@ -75,14 +76,16 @@ class ChapterController extends Controller
             'draft_file.max' => 'Ukuran file draf maksimal 20 MB.',
         ]);
 
-        $version = $this->storageService->storeDraft(
-            $chapter,
-            $request->file('draft_file'),
-            $user,
-            $request->input('notes')
-        );
+        $version = DB::transaction(function () use ($chapter, $request, $user) {
+            return $this->storageService->storeDraft(
+                $chapter,
+                $request->file('draft_file'),
+                $user,
+                $request->input('notes')
+            );
+        });
 
-        $this->analyticsService->analyzeThesis($thesis);
+        $this->analyticsService->analyzeThesis($thesis->fresh());
 
         AuditLog::log('DRAFT_UPLOADED', $version, "Mahasiswa mengunggah {$chapter->title} Versi {$version->version_number}.");
 

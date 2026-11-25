@@ -80,53 +80,6 @@
                     Profil Dosen
                 </a>
             </li>
-        @elseif($user && $user->isKoordinator())
-            <li style="margin-bottom: 12px;">
-                <a href="{{ route('dashboard.koordinator') }}" style="color: #6b4f96; text-decoration: none; font-weight: {{ request()->routeIs('dashboard.koordinator') ? '800' : '600' }}; display: block; padding: 8px 12px; border-radius: 10px; {{ request()->routeIs('dashboard.koordinator') ? 'background-color: #e2d9f7;' : '' }}">
-                    Monitoring TA
-                </a>
-            </li>
-            <li style="margin-bottom: 12px;">
-                <a href="{{ route('monitoring.stagnant') }}" style="color: #6b4f96; text-decoration: none; font-weight: {{ request()->routeIs('monitoring.stagnant') ? '800' : '600' }}; display: block; padding: 8px 12px; border-radius: 10px; {{ request()->routeIs('monitoring.stagnant') ? 'background-color: #e2d9f7;' : '' }}">
-                    Mahasiswa Stagnan
-                </a>
-            </li>
-            <li style="margin-bottom: 12px;">
-                <a href="{{ route('notifications.index') }}" style="color: #6b4f96; text-decoration: none; font-weight: {{ request()->routeIs('notifications.*') ? '800' : '600' }}; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 10px; {{ request()->routeIs('notifications.*') ? 'background-color: #e2d9f7;' : '' }}">
-                    <span>Pemberitahuan</span>
-                    @if($sidebarUnreadNotif > 0)
-                        <span style="background:#9d62cc; color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:9999px;">{{ $sidebarUnreadNotif }}</span>
-                    @endif
-                </a>
-            </li>
-        @elseif($user && $user->isKaprodi())
-            <li style="margin-bottom: 12px;">
-                <a href="{{ route('dashboard.kaprodi') }}" style="color: #6b4f96; text-decoration: none; font-weight: {{ request()->routeIs('dashboard.kaprodi') ? '800' : '600' }}; display: block; padding: 8px 12px; border-radius: 10px; {{ request()->routeIs('dashboard.kaprodi') ? 'background-color: #e2d9f7;' : '' }}">
-                    Dashboard Kaprodi
-                </a>
-            </li>
-            <li style="margin-bottom: 12px;">
-                <a href="{{ route('monitoring.delay_risk') }}" style="color: #6b4f96; text-decoration: none; font-weight: {{ request()->routeIs('monitoring.delay_risk') ? '800' : '600' }}; display: block; padding: 8px 12px; border-radius: 10px; {{ request()->routeIs('monitoring.delay_risk') ? 'background-color: #e2d9f7;' : '' }}">
-                    Proyeksi Kelulusan
-                </a>
-            </li>
-            <li style="margin-bottom: 12px;">
-                <a href="{{ route('monitoring.supervisors') }}" style="color: #6b4f96; text-decoration: none; font-weight: {{ request()->routeIs('monitoring.supervisors') ? '800' : '600' }}; display: block; padding: 8px 12px; border-radius: 10px; {{ request()->routeIs('monitoring.supervisors') ? 'background-color: #e2d9f7;' : '' }}">
-                    Beban Bimbingan Dosen
-                </a>
-            </li>
-            <li style="margin-bottom: 12px;">
-                <a href="{{ route('notifications.index') }}" style="color: #6b4f96; text-decoration: none; font-weight: {{ request()->routeIs('notifications.*') ? '800' : '600' }}; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 10px; {{ request()->routeIs('notifications.*') ? 'background-color: #e2d9f7;' : '' }}">
-                    <span>Pemberitahuan</span>
-                    @if($sidebarUnreadNotif > 0)
-                        <span style="background:#9d62cc; color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:9999px;">{{ $sidebarUnreadNotif }}</span>
-                    @endif
-                </a>
-            </li>
-        @elseif($user && $user->isAdmin())
-            <li style="margin-bottom: 12px;"><a href="{{ route('admin.audit_logs') }}" style="color: #6b4f96; text-decoration: none; font-weight: 600;">Audit Logs</a></li>
-            <li style="margin-bottom: 12px;"><a href="{{ route('admin.chapters.index') }}" style="color: #6b4f96; text-decoration: none; font-weight: 600;">Kelola Bab</a></li>
-            <li style="margin-bottom: 12px;"><a href="{{ route('admin.users.index') }}" style="color: #6b4f96; text-decoration: none; font-weight: 600;">Kelola Pengguna</a></li>
         @endif
         <li style="margin-top: 20px; padding-top: 12px; border-top: 1px solid #e2d9f7;">
             <form action="{{ route('logout') }}" method="POST" style="margin:0;">

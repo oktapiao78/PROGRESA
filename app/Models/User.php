@@ -97,21 +97,6 @@ class User extends Authenticatable
         return $this->role === UserRole::DOSEN;
     }
 
-    public function isKoordinator(): bool
-    {
-        return $this->role === UserRole::KOORDINATOR;
-    }
-
-    public function isKaprodi(): bool
-    {
-        return $this->role === UserRole::KAPRODI;
-    }
-
-    public function isAdmin(): bool
-    {
-        return $this->role === UserRole::ADMIN;
-    }
-
     public function hasRole(UserRole|array|string $roles): bool
     {
         if (is_array($roles)) {
@@ -166,5 +151,10 @@ class User extends Authenticatable
     public function supervisorRequests(): HasMany
     {
         return $this->hasMany(SupervisionRequest::class, 'supervisor_id');
+    }
+
+    public function supervisorAssignments(): HasMany
+    {
+        return $this->hasMany(ThesisSupervisorAssignment::class, 'supervisor_id');
     }
 }

@@ -99,18 +99,13 @@ class SupervisionController extends Controller
             return view('supervision.lecturer_index', compact('mySlots', 'pendingRequests', 'upcomingSessions', 'completedSessions'));
         }
 
-        // Koordinator / Kaprodi / Admin: monitoring all supervisions
-        $allRequests = SupervisionRequest::with(['student', 'supervisor', 'thesis'])
-            ->latest()
-            ->paginate(15);
-
-        return view('supervision.admin_index', compact('allRequests'));
+        abort(403, 'Role pengguna tidak didukung.');
     }
 
     public function storeSlot(Request $request): RedirectResponse
     {
         $user = auth()->user();
-        if (!$user->isDosen() && !$user->isAdmin()) {
+        if (!$user->isDosen()) {
             abort(403);
         }
 
@@ -133,7 +128,7 @@ class SupervisionController extends Controller
     public function destroySlot(SupervisionSlot $slot): RedirectResponse
     {
         $user = auth()->user();
-        if ($slot->supervisor_id !== $user->id && !$user->isAdmin()) {
+        if ($slot->supervisor_id !== $user->id) {
             abort(403);
         }
 
@@ -175,7 +170,7 @@ class SupervisionController extends Controller
     public function respond(Request $request, SupervisionRequest $supervisionRequest): RedirectResponse
     {
         $user = auth()->user();
-        if ($supervisionRequest->supervisor_id !== $user->id && !$user->isAdmin()) {
+        if ($supervisionRequest->supervisor_id !== $user->id) {
             abort(403);
         }
 
@@ -205,7 +200,7 @@ class SupervisionController extends Controller
     public function complete(Request $request, SupervisionRequest $supervisionRequest): RedirectResponse
     {
         $user = auth()->user();
-        if ($supervisionRequest->supervisor_id !== $user->id && !$user->isAdmin()) {
+        if ($supervisionRequest->supervisor_id !== $user->id) {
             abort(403);
         }
 

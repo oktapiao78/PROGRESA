@@ -69,14 +69,10 @@ class DocumentStorageService
         $chapter = $version->chapter;
         $thesis = $chapter->thesis;
 
-        // Authorization check: Student, Supervisor 1/2, Koordinator, Kaprodi, Admin
+        // Authorization check: Student or assigned Supervisor 1/2
         $isStudent = $thesis->student_id === $user->id;
         $isSupervisor = $thesis->isSupervisor($user);
-        $isStaff = in_array($user->role, [
-            \App\Enums\UserRole::KOORDINATOR,
-            \App\Enums\UserRole::KAPRODI,
-            \App\Enums\UserRole::ADMIN
-        ]);
+        $isStaff = false;
 
         if (!($isStudent || $isSupervisor || $isStaff)) {
             abort(403, 'Anda tidak memiliki izin untuk mengunduh dokumen ini.');

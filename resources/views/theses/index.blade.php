@@ -13,7 +13,7 @@
     @if(!$myThesis)
         <div class="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
             <h3 class="text-base font-bold text-slate-800 mb-2">Belum Ada Data Skripsi Terdaftar</h3>
-            <p class="text-xs text-slate-500 mb-6">Data tugas akhir / skripsi Anda belum didaftarkan oleh Koordinator TA atau Admin. Silakan hubungi koordinator program studi Anda.</p>
+            <p class="text-xs text-slate-500 mb-6">Data tugas akhir / skripsi Anda belum didaftarkan. Silakan hubungi dosen pembimbing Anda.</p>
             <a href="{{ route('profile.mahasiswa') }}" class="inline-block px-5 py-2.5 bg-[#DDD7FA] text-[#7b5ea7] font-bold rounded-xl text-xs hover:bg-[#DCD7FE] transition">
                 Lihat Profil Mahasiswa
             </a>

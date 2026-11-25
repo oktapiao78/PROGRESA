@@ -109,6 +109,9 @@
                             <div style="font-size:0.8rem; color:#6b6b7b; margin-top:3px;">
                                 {{ $draft->student_name }} ({{ $draft->student_nim }}) &bull; {{ \Illuminate\Support\Str::limit($draft->thesis_title, 70) }}
                             </div>
+                            <div style="font-size:0.75rem; color:#8a8a9d; margin-top:5px;">
+                                {{ $draft->role }} &bull; {{ $draft->review_status }} &bull; {{ $draft->file_name ?: 'File belum tersedia' }}
+                            </div>
                         </div>
                         <a href="{{ route('chapters.show', $draft->chapter_id) }}" style="background:#DDD7FA; color:#7B5EA7; padding:9px 18px; border-radius:10px; font-size:0.82rem; font-weight:700; text-decoration:none; white-space:nowrap; transition: background 0.2s;">
                             Review Bab &rarr;

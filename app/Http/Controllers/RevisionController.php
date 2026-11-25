@@ -8,6 +8,7 @@ use App\Models\RevisionItem;
 use App\Models\ThesisChapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RevisionController extends Controller
 {
@@ -16,7 +17,7 @@ class RevisionController extends Controller
         $user = auth()->user();
         $thesis = $chapter->thesis;
 
-        if (!$thesis->isSupervisor($user) && !$user->isAdmin()) {
+        if (!$thesis->isSupervisor($user)) {
             abort(403, 'Hanya dosen pembimbing yang dapat menambahkan butir revisi.');
         }
 
@@ -25,15 +26,17 @@ class RevisionController extends Controller
             'document_version_id' => ['nullable', 'exists:document_versions,id'],
         ]);
 
-        $item = RevisionItem::create([
-            'thesis_chapter_id' => $chapter->id,
-            'document_version_id' => $validated['document_version_id'] ?? $chapter->current_version_id,
-            'supervisor_id' => $user->id,
-            'note' => $validated['note'],
-            'is_resolved' => false,
-        ]);
-
-        $chapter->update(['status' => \App\Enums\ChapterStatus::REVISION_REQUIRED]);
+        $item = DB::transaction(function () use ($chapter, $validated, $user) {
+            $item = RevisionItem::create([
+                'thesis_chapter_id' => $chapter->id,
+                'document_version_id' => $validated['document_version_id'] ?? $chapter->current_version_id,
+                'supervisor_id' => $user->id,
+                'note' => $validated['note'],
+                'is_resolved' => false,
+            ]);
+            $chapter->update(['status' => \App\Enums\ChapterStatus::REVISION_REQUIRED]);
+            return $item;
+        });
 
         AuditLog::log('REVISION_ITEM_ADDED', $item, "Dosen {$user->name} menambahkan butir revisi pada {$chapter->title}.");
 
@@ -53,7 +56,7 @@ class RevisionController extends Controller
         $user = auth()->user();
         $thesis = $item->chapter->thesis;
 
-        if ($thesis->student_id !== $user->id && !$user->isAdmin()) {
+        if ($thesis->student_id !== $user->id) {
             abort(403, 'Hanya mahasiswa yang dapat memberikan tanggapan perbaikan revisi.');
         }
 
@@ -85,7 +88,7 @@ class RevisionController extends Controller
         $user = auth()->user();
         $thesis = $item->chapter->thesis;
 
-        if (!$thesis->isSupervisor($user) && !$user->isAdmin()) {
+        if (!$thesis->isSupervisor($user)) {
             abort(403, 'Hanya dosen pembimbing yang dapat memverifikasi status penyelesaian revisi.');
         }
 

@@ -77,26 +77,6 @@
                             💬 Chat Mahasiswa Ini
                         </a>
                     @endif
-                    @if(auth()->user()->isKoordinator() || auth()->user()->isAdmin())
-                        @if(!$thesis->latestStagnation?->is_escalated)
-                            <form action="{{ route('approvals.escalate', $thesis) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="w-full py-2 px-3 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-xl text-xs font-bold transition">
-                                    Tandai Eskalasi Bimbingan
-                                </button>
-                            </form>
-                        @else
-                            <form action="{{ route('approvals.resolve_escalation', $thesis) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="w-full py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-semibold transition">
-                                    Selesaikan Status Eskalasi
-                                </button>
-                            </form>
-                        @endif
-                        <a href="{{ route('theses.edit', $thesis) }}" class="block text-center py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
-                            Edit Pembimbing & Data Skripsi
-                        </a>
-                    @endif
                 </div>
             </div>
         </div>

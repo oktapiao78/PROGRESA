@@ -7,6 +7,7 @@ use App\Enums\SupervisionStatus;
 use App\Models\RevisionItem;
 use App\Models\SupervisionRequest;
 use App\Models\Thesis;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -17,18 +18,6 @@ class DashboardController extends Controller
 
         if ($user && $user->isDosen()) {
             return redirect()->route('dashboard.dosen');
-        }
-
-        if ($user && $user->isKoordinator()) {
-            return redirect()->route('dashboard.koordinator');
-        }
-
-        if ($user && $user->isKaprodi()) {
-            return redirect()->route('dashboard.kaprodi');
-        }
-
-        if ($user && $user->isAdmin()) {
-            return redirect()->route('admin.users.index');
         }
 
         return redirect()->route('dashboard.mahasiswa');
@@ -45,12 +34,16 @@ class DashboardController extends Controller
             'chapters.currentVersion',
             'chapters.revisionItems',
             'chapters.openRevisions',
+            'chapters.approvals.approver',
+            'chapters.versions.uploader',
         ])
             ->where('student_id', $student->id)
             ->first();
 
         $openRevisions = collect();
         $scheduledSessions = collect();
+        $completedSessions = collect();
+        $notifications = Notification::where('user_id', $student->id)->latest()->limit(8)->get();
         $thesis = null;
 
         if ($studentThesis) {
@@ -98,9 +91,14 @@ class DashboardController extends Controller
                 ->whereIn('status', [SupervisionStatus::ACCEPTED, SupervisionStatus::REQUESTED])
                 ->orderBy('scheduled_at')
                 ->get();
+
+            $completedSessions = SupervisionRequest::with(['supervisor'])
+                ->where('student_id', $student->id)
+                ->where('status', SupervisionStatus::COMPLETED)
+                ->latest('completed_at')->limit(8)->get();
         }
 
-        return view('dashboard.mahasiswa', compact('student', 'thesis', 'openRevisions', 'scheduledSessions'));
+        return view('dashboard.mahasiswa', compact('student', 'thesis', 'openRevisions', 'scheduledSessions', 'completedSessions', 'notifications'));
     }
 
     public function dosenDashboard()
@@ -110,17 +108,17 @@ class DashboardController extends Controller
         $p1Count = Thesis::where('supervisor_1_id', $user->id)->count();
         $p2Count = Thesis::where('supervisor_2_id', $user->id)->count();
 
-        $theses = Thesis::with(['student', 'latestStagnation', 'chapters.currentVersion'])
+        $theses = Thesis::with(['student', 'latestStagnation', 'chapters.currentVersion', 'chapters.approvals.approver', 'chapters.revisionItems.supervisor', 'chapters.versions.uploader'])
             ->where(function ($q) use ($user) {
                 $q->where('supervisor_1_id', $user->id)
                   ->orWhere('supervisor_2_id', $user->id);
             })
             ->get();
 
-        $pendingDrafts = $theses->flatMap(function ($t) {
+        $pendingDrafts = $theses->flatMap(function ($t) use ($user) {
             return $t->chapters
                 ->whereIn('status', [ChapterStatus::SUBMITTED, ChapterStatus::IN_REVIEW])
-                ->map(function ($ch) use ($t) {
+                ->map(function ($ch) use ($t, $user) {
                     return (object) [
                         'chapter_id' => $ch->id,
                         'chapter_title' => $ch->title,
@@ -129,6 +127,9 @@ class DashboardController extends Controller
                         'thesis_title' => $t->title,
                         'version' => $ch->currentVersion?->version_number ?? 1,
                         'updated_at' => $ch->updated_at,
+                        'file_name' => $ch->currentVersion?->original_filename,
+                        'review_status' => $ch->status?->label() ?? 'Menunggu review',
+                        'role' => $t->supervisor_1_id === $user->id ? 'Pembimbing 1' : 'Pembimbing 2',
                     ];
                 });
         })->values();
@@ -161,18 +162,4 @@ class DashboardController extends Controller
         return view('dashboard.dosen', compact('stats', 'mahasiswa_list', 'pendingDrafts'));
     }
 
-    public function koordinatorDashboard(\App\Services\AnalyticsAndRiskService $analyticsService)
-    {
-        $metrics = $analyticsService->getAggregatedMetrics();
-        $theses = Thesis::with(['student', 'supervisor1', 'supervisor2', 'latestStagnation'])->paginate(15);
-
-        return view('dashboard.koordinator', compact('metrics', 'theses'));
-    }
-
-    public function kaprodiDashboard(\App\Services\AnalyticsAndRiskService $analyticsService)
-    {
-        $metrics = $analyticsService->getAggregatedMetrics(Auth::user()->study_program_id);
-
-        return view('dashboard.kaprodi', compact('metrics'));
-    }
 }

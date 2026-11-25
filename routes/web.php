@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -9,7 +8,6 @@ use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentDiffController;
-use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RevisionController;
@@ -55,15 +53,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/revisions/{item}/toggle-resolve', [RevisionController::class, 'toggleResolve'])->name('revisions.toggle');
     });
 
-    // Khusus Koordinator & Kaprodi
-    Route::middleware('role:koordinator,admin')->group(function () {
-        Route::get('/dashboard/koordinator', [DashboardController::class, 'koordinatorDashboard'])->name('dashboard.koordinator');
-    });
-
-    Route::middleware('role:kaprodi,admin')->group(function () {
-        Route::get('/dashboard/kaprodi', [DashboardController::class, 'kaprodiDashboard'])->name('dashboard.kaprodi');
-    });
-
     // Shared Authenticated Routes (dengan otorisasi di masing-masing controller)
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile', [ProfileController::class, 'update']);
@@ -79,18 +68,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/versions/{version}/download', [ChapterController::class, 'downloadVersion'])->name('versions.download');
 
     Route::post('/chapters/{chapter}/approve', [ApprovalController::class, 'approveStage'])->name('approvals.stage');
-    Route::post('/theses/{thesis}/escalate', [ApprovalController::class, 'escalate'])->name('approvals.escalate');
-    Route::post('/theses/{thesis}/resolve-escalation', [ApprovalController::class, 'resolveEscalation'])->name('approvals.resolve_escalation');
 
     // Jadwal & Bimbingan
     Route::get('/supervision', [SupervisionController::class, 'index'])->name('supervision.index');
 
-    // Monitoring & Risk Dashboards (Koordinator, Kaprodi, Admin)
-    Route::middleware('role:koordinator,kaprodi,admin')->prefix('monitoring')->name('monitoring.')->group(function () {
-        Route::get('/stagnant', [MonitoringController::class, 'stagnantStudents'])->name('stagnant');
-        Route::get('/supervisors', [MonitoringController::class, 'supervisorResponse'])->name('supervisors');
-        Route::get('/delay-risk', [MonitoringController::class, 'delayRisk'])->name('delay_risk');
-    });
 
     // Pemberitahuan & Chat
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -100,13 +81,4 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
 
-    // Admin routes (only admin role)
-    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/users', [AdminController::class, 'users'])->name('users.index');
-        Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
-        Route::post('/users/{user}/toggle', [AdminController::class, 'toggleUserStatus'])->name('users.toggle');
-        Route::get('/chapters', [AdminController::class, 'chapterTemplates'])->name('chapters.index');
-        Route::post('/chapters', [AdminController::class, 'storeChapterTemplate'])->name('chapters.store');
-        Route::get('/audit-logs', [AdminController::class, 'auditLogs'])->name('audit_logs');
-    });
 });

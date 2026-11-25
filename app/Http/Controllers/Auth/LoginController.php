@@ -40,6 +40,12 @@ class LoginController extends Controller
             ]);
         }
 
+        if (! $user->isMahasiswa() && ! $user->isDosen()) {
+            return back()->withInput($request->only('login', 'identifier', 'remember'))->withErrors([
+                'login' => 'Role akun tidak didukung. Gunakan akun Mahasiswa atau Dosen.',
+            ]);
+        }
+
         if (!$user->is_active) {
             return back()->withInput($request->only('login', 'identifier'))->withErrors([
                 'login' => 'Akun Anda dinonaktifkan. Silakan hubungi administrator.',

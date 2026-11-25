@@ -66,6 +66,11 @@ class Thesis extends Model
         return $this->hasMany(SupervisionRequest::class);
     }
 
+    public function supervisorAssignments(): HasMany
+    {
+        return $this->hasMany(ThesisSupervisorAssignment::class);
+    }
+
     public function stagnationLogs(): HasMany
     {
         return $this->hasMany(StagnationLog::class)->latest();

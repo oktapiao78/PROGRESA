@@ -14,6 +14,7 @@ use App\Services\AnalyticsAndRiskService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 
 class ThesisController extends Controller
 {
@@ -33,10 +34,6 @@ class ThesisController extends Controller
             $query->where('student_id', $user->id);
         } elseif ($user->isDosen()) {
             $query->where(fn($q) => $q->where('supervisor_1_id', $user->id)->orWhere('supervisor_2_id', $user->id));
-        } elseif ($user->isKoordinator() || $user->isKaprodi()) {
-            if ($user->study_program_id) {
-                $query->where('study_program_id', $user->study_program_id);
-            }
         }
 
         // Filters
@@ -89,7 +86,7 @@ class ThesisController extends Controller
     public function edit(Thesis $thesis): View
     {
         $user = auth()->user();
-        if (!($user->isAdmin() || $user->isKoordinator() || $thesis->student_id === $user->id)) {
+        if ($thesis->student_id !== $user->id) {
             abort(403);
         }
 
@@ -100,7 +97,7 @@ class ThesisController extends Controller
     public function update(Request $request, Thesis $thesis): RedirectResponse
     {
         $user = auth()->user();
-        if (!($user->isAdmin() || $user->isKoordinator() || $thesis->student_id === $user->id)) {
+        if ($thesis->student_id !== $user->id) {
             abort(403);
         }
 
@@ -108,8 +105,6 @@ class ThesisController extends Controller
             'title' => ['required', 'string', 'max:500'],
             'abstract' => ['nullable', 'string'],
             'target_completion_date' => ['nullable', 'date'],
-            'supervisor_1_id' => ['nullable', 'exists:users,id'],
-            'supervisor_2_id' => ['nullable', 'exists:users,id'],
             'status' => ['nullable', 'string'],
         ]);
 

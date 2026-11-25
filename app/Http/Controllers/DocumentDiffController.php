@@ -25,7 +25,7 @@ class DocumentDiffController extends Controller
         // Authorization
         $isStudent = $thesis->student_id === $user->id;
         $isSupervisor = $thesis->isSupervisor($user);
-        $isStaff = $user->isKoordinator() || $user->isKaprodi() || $user->isAdmin();
+        $isStaff = false;
 
         if (!($isStudent || $isSupervisor || $isStaff)) {
             abort(403);
