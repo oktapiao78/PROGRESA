@@ -90,42 +90,66 @@
     <div class="card">
         <h2 class="section-title">Draf Bab Perlu Ditinjau</h2>
         <p class="section-desc">Daftar unggahan draf bab terbaru dari mahasiswa bimbingan yang menunggu feedback atau approval Anda</p>
-        
-        <div class="empty-state">
-            Tidak ada draft bab yang sedang menunggu review saat ini. Semua telah direspon
-        </div>
+
+        @if(($pendingDrafts ?? collect())->isEmpty())
+            <div class="empty-state">
+                Tidak ada draft bab yang sedang menunggu review saat ini. Semua telah direspon.
+            </div>
+        @else
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                @foreach($pendingDrafts as $draft)
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; border:1px solid #e1e1e8; border-radius:12px; padding:14px 18px; background:#fafafc;">
+                        <div>
+                            <div style="font-weight:700; color:#4a4a5a; font-size:0.9rem;">
+                                {{ $draft->chapter_title }} <span style="color:#7b5ea7;">(v{{ $draft->version }})</span>
+                            </div>
+                            <div style="font-size:0.8rem; color:#6b6b7b; margin-top:2px;">
+                                {{ $draft->student_name }} ({{ $draft->student_nim }}) &bull; {{ \Illuminate\Support\Str::limit($draft->thesis_title, 70) }}
+                            </div>
+                        </div>
+                        <a href="{{ route('chapters.show', $draft->chapter_id) }}" style="background:#7b5ea7; color:#fff; padding:8px 16px; border-radius:8px; font-size:0.8rem; font-weight:700; text-decoration:none; white-space:nowrap;">
+                            Review Bab &rarr;
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <div class="card">
         <h2 class="section-title">Daftar Mahasiswa Bimbingan Aktif</h2>
         <p class="section-desc">Kemajuan Bimbingan dan indikator risiko stagnansi</p>
-        
-        <div class="student-grid">
-            @foreach($mahasiswa_list as $mhs)
-            <div class="student-card">
-                <div class="student-header">
-                    <span class="student-role">{{ $mhs->pembimbing }}</span>
-                    @if($mhs->risk)
-                        <span class="risk-badge {{ $mhs->risk == 'Risiko Tinggi (Stagnan)' ? 'risk-high' : 'risk-critical' }}">{{ $mhs->risk }}</span>
-                    @endif
+
+        @if($mahasiswa_list->isEmpty())
+            <div class="empty-state">Belum ada mahasiswa bimbingan yang terdaftar untuk Anda.</div>
+        @else
+            <div class="student-grid">
+                @foreach($mahasiswa_list as $mhs)
+                <div class="student-card">
+                    <div class="student-header">
+                        <span class="student-role">{{ $mhs->pembimbing }}</span>
+                        @if($mhs->risk)
+                            <span class="risk-badge {{ $mhs->risk == 'Risiko Tinggi (Stagnan)' ? 'risk-high' : 'risk-critical' }}">{{ $mhs->risk }}</span>
+                        @endif
+                    </div>
+                    <h3 class="student-title">{{ $mhs->judul }}</h3>
+                    <p class="student-name">{{ $mhs->nama }} ({{ $mhs->nim }})</p>
+
+                    <div class="progress-label">
+                        <span>Progress Skripsi:</span>
+                        <span>{{ $mhs->progress }}%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: {{ $mhs->progress }}%;"></div>
+                    </div>
+
+                    <a href="{{ route('theses.show', $mhs->id) }}" class="btn-detail">
+                        Detail Skripsi &rarr;
+                    </a>
                 </div>
-                <h3 class="student-title">{{ $mhs->judul }}</h3>
-                <p class="student-name">{{ $mhs->nama }} ({{ $mhs->nim }})</p>
-                
-                <div class="progress-label">
-                    <span>Progress Skripsi:</span>
-                    <span>{{ $mhs->progress }}%</span>
-                </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" style="width: {{ $mhs->progress }}%;"></div>
-                </div>
-                
-                <a href="#" class="btn-detail">
-                    Detail Skripsi &rarr;
-                </a>
+                @endforeach
             </div>
-            @endforeach
-        </div>
+        @endif
     </div>
 
 </div>

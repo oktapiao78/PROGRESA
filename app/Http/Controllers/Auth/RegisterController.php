@@ -46,6 +46,6 @@ class RegisterController extends Controller
             'is_active' => true,
         ]);
 
-        return redirect()->route('login')->with('success', 'Pendaftaran akun berhasil! Silakan masuk dengan akun yang baru saja Anda daftarkan.');
+        return redirect()->route('login')->with('success', 'Pendaftaran Berhasil');
     }
 }

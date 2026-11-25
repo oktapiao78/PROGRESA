@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\Notification;
 use App\Models\RevisionItem;
 use App\Models\ThesisChapter;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +37,14 @@ class RevisionController extends Controller
 
         AuditLog::log('REVISION_ITEM_ADDED', $item, "Dosen {$user->name} menambahkan butir revisi pada {$chapter->title}.");
 
+        Notification::sendTo(
+            $thesis->student_id,
+            'Catatan Revisi Baru: ' . $chapter->title,
+            "{$user->name} menambahkan catatan revisi pada {$chapter->title}: " . mb_strimwidth($validated['note'], 0, 100, '...'),
+            'revision',
+            route('chapters.show', $chapter)
+        );
+
         return back()->with('success', 'Butir revisi berhasil ditambahkan ke daftar periksa mahasiswa.');
     }
 
@@ -58,6 +67,16 @@ class RevisionController extends Controller
 
         AuditLog::log('REVISION_RESPONSE_SUBMITTED', $item, "Mahasiswa {$user->name} menanggapi butir revisi.");
 
+        foreach (array_unique(array_filter([$thesis->supervisor_1_id, $thesis->supervisor_2_id, $item->supervisor_id])) as $supervisorId) {
+            Notification::sendTo(
+                $supervisorId,
+                'Tanggapan Revisi: ' . $item->chapter->title,
+                "{$user->name} mengirim tanggapan revisi pada {$item->chapter->title}.",
+                'revision_response',
+                route('chapters.show', $item->thesis_chapter_id)
+            );
+        }
+
         return back()->with('success', 'Tanggapan dan penjelasan perbaikan berhasil disimpan.');
     }
 
@@ -78,6 +97,16 @@ class RevisionController extends Controller
 
         $statusLabel = $newStatus ? 'diselesaikan' : 'dibuka kembali';
         AuditLog::log('REVISION_STATUS_TOGGLED', $item, "Butir revisi {$statusLabel} oleh Dosen {$user->name}.");
+
+        if ($newStatus) {
+            Notification::sendTo(
+                $thesis->student_id,
+                'Revisi Disetujui: ' . $item->chapter->title,
+                "{$user->name} menyetujui & menandai selesai butir revisi pada {$item->chapter->title}.",
+                'revision_resolved',
+                route('chapters.show', $item->thesis_chapter_id)
+            );
+        }
 
         return back()->with('success', "Butir revisi berhasil ditandai {$statusLabel}.");
     }

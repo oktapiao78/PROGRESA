@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ApprovalStatus;
 use App\Models\AuditLog;
+use App\Models\Notification;
 use App\Models\Thesis;
 use App\Models\ThesisChapter;
 use App\Services\ApprovalWorkflowService;
@@ -36,6 +37,14 @@ class ApprovalController extends Controller
                 $validated['stage'],
                 $statusEnum,
                 $validated['feedback'] ?? null
+            );
+
+            Notification::sendTo(
+                $chapter->thesis->student_id,
+                'Hasil Review ' . $chapter->title . ': ' . $statusEnum->label(),
+                auth()->user()->name . " memberikan hasil review ({$statusEnum->label()}) pada {$chapter->title}.",
+                'chapter_review',
+                route('chapters.show', $chapter)
             );
 
             return back()->with('success', "Persetujuan tahap {$approval->stageLabel()} berhasil diperbarui ({$statusEnum->label()}).");

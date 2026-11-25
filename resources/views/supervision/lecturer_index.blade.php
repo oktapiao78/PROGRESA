@@ -136,10 +136,10 @@
                             </p>
                         </div>
 
-                        <form action="{{ route('supervision.requests.respond', $req) }}" method="POST" class="flex items-center space-x-2 flex-shrink-0">
+                        <form action="{{ route('supervision.respond', $req) }}" method="POST" class="flex items-center space-x-2 flex-shrink-0">
                             @csrf
-                            <input type="text" name="supervisor_notes" placeholder="Catatan respon..."
-                                class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs w-44">
+                            <input type="text" name="supervisor_notes" placeholder="Catatan / alasan jika tolak..."
+                                class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs w-52">
                             <button type="submit" name="status" value="accepted"
                                 class="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">
                                 Terima
@@ -182,6 +182,46 @@
                         </div>
                     </div>
                 @endforeach
+            </div>
+        @endif
+    </div>
+
+    <!-- Completed Sessions & Berita Acara -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Riwayat Sesi Bimbingan &amp; Berita Acara</h3>
+        <p class="text-xs text-slate-500 mb-4">Daftar sesi bimbingan yang telah selesai dilaksanakan beserta ringkasan berita acara.</p>
+
+        @if($completedSessions->isEmpty())
+            <p class="text-xs text-slate-400 text-center py-6">Belum ada sesi bimbingan yang selesai.</p>
+        @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3">Tanggal Selesai</th>
+                            <th class="py-2.5 px-3">Mahasiswa</th>
+                            <th class="py-2.5 px-3">Topik</th>
+                            <th class="py-2.5 px-3">Berita Acara</th>
+                            <th class="py-2.5 px-3">Tindak Lanjut</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($completedSessions as $done)
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="py-2.5 px-3 whitespace-nowrap text-slate-700 font-medium">
+                                    {{ $done->completed_at ? $done->completed_at->isoFormat('D MMM Y, HH:mm') : '-' }}
+                                </td>
+                                <td class="py-2.5 px-3 font-semibold text-slate-900">{{ $done->student?->name ?? '-' }}</td>
+                                <td class="py-2.5 px-3 font-medium text-slate-800">{{ $done->topic }}</td>
+                                <td class="py-2.5 px-3 text-slate-600">{{ $done->meeting_summary ?? '-' }}</td>
+                                <td class="py-2.5 px-3 text-slate-600">{{ $done->action_items ?? '-' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">
+                {{ $completedSessions->links() }}
             </div>
         @endif
     </div>

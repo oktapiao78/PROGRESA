@@ -8,6 +8,7 @@ use App\Models\SupervisionSlot;
 use App\Models\Thesis;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class SupervisionScheduleService
@@ -78,39 +79,47 @@ class SupervisionScheduleService
             ]);
         }
 
-        // Check remaining quota
-        if (!$slot->hasAvailableQuota()) {
-            throw ValidationException::withMessages([
-                'slot_id' => 'Kuota bimbingan pada slot ini sudah penuh.',
+        return DB::transaction(function () use ($student, $slot, $thesis, $data) {
+            $lockedSlot = SupervisionSlot::where('id', $slot->id)->lockForUpdate()->firstOrFail();
+
+            if (!$lockedSlot->is_active) {
+                throw ValidationException::withMessages([
+                    'slot_id' => 'Slot bimbingan ini sudah tidak aktif.',
+                ]);
+            }
+
+            if (!$lockedSlot->hasAvailableQuota()) {
+                throw ValidationException::withMessages([
+                    'slot_id' => 'Kuota bimbingan pada slot ini sudah penuh.',
+                ]);
+            }
+
+            $existing = SupervisionRequest::where('student_id', $student->id)
+                ->where('supervision_slot_id', $lockedSlot->id)
+                ->whereIn('status', [SupervisionStatus::REQUESTED, SupervisionStatus::ACCEPTED])
+                ->exists();
+
+            if ($existing) {
+                throw ValidationException::withMessages([
+                    'slot_id' => 'Anda sudah mengajukan bimbingan pada slot ini.',
+                ]);
+            }
+
+            $request = SupervisionRequest::create([
+                'supervision_slot_id' => $lockedSlot->id,
+                'thesis_id' => $thesis->id,
+                'student_id' => $student->id,
+                'supervisor_id' => $lockedSlot->supervisor_id,
+                'topic' => $data['topic'],
+                'student_notes' => $data['student_notes'] ?? null,
+                'status' => SupervisionStatus::REQUESTED,
+                'scheduled_at' => Carbon::parse($lockedSlot->date)->format('Y-m-d') . ' ' . $lockedSlot->start_time,
             ]);
-        }
 
-        // Check if student already booked this exact slot
-        $existing = SupervisionRequest::where('student_id', $student->id)
-            ->where('supervision_slot_id', $slot->id)
-            ->whereIn('status', [SupervisionStatus::REQUESTED, SupervisionStatus::ACCEPTED])
-            ->exists();
+            $lockedSlot->increment('booked_count');
 
-        if ($existing) {
-            throw ValidationException::withMessages([
-                'slot_id' => 'Anda sudah mengajukan bimbingan pada slot ini.',
-            ]);
-        }
-
-        $request = SupervisionRequest::create([
-            'supervision_slot_id' => $slot->id,
-            'thesis_id' => $thesis->id,
-            'student_id' => $student->id,
-            'supervisor_id' => $slot->supervisor_id,
-            'topic' => $data['topic'],
-            'student_notes' => $data['student_notes'] ?? null,
-            'status' => SupervisionStatus::REQUESTED,
-            'scheduled_at' => Carbon::parse($slot->date)->format('Y-m-d') . ' ' . $slot->start_time,
-        ]);
-
-        $slot->increment('booked_count');
-
-        return $request;
+            return $request;
+        });
     }
 
     /**
@@ -118,17 +127,28 @@ class SupervisionScheduleService
      */
     public function updateStatus(SupervisionRequest $request, SupervisionStatus $status, ?string $notes = null): SupervisionRequest
     {
-        $request->update([
-            'status' => $status,
-            'supervisor_notes' => $notes ?? $request->supervisor_notes,
-        ]);
+        return DB::transaction(function () use ($request, $status, $notes) {
+            $previousStatus = $request->status;
 
-        // If rejected or cancelled, decrement slot booked_count
-        if (in_array($status, [SupervisionStatus::REJECTED, SupervisionStatus::CANCELLED]) && $request->slot) {
-            $request->slot->decrement('booked_count');
-        }
+            $request->update([
+                'status' => $status,
+                'supervisor_notes' => $notes ?? $request->supervisor_notes,
+            ]);
 
-        return $request;
+            // If rejected or cancelled from a non-rejected/cancelled state, decrement slot booked_count safely
+            if (
+                in_array($status, [SupervisionStatus::REJECTED, SupervisionStatus::CANCELLED])
+                && !in_array($previousStatus, [SupervisionStatus::REJECTED, SupervisionStatus::CANCELLED])
+                && $request->supervision_slot_id
+            ) {
+                $lockedSlot = SupervisionSlot::where('id', $request->supervision_slot_id)->lockForUpdate()->first();
+                if ($lockedSlot && $lockedSlot->booked_count > 0) {
+                    $lockedSlot->decrement('booked_count');
+                }
+            }
+
+            return $request;
+        });
     }
 
     /**

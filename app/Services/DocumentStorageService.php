@@ -55,7 +55,7 @@ class DocumentStorageService
 
         $chapter->update([
             'current_version_id' => $version->id,
-            'status' => \App\Enums\ChapterStatus::SUBMITTED,
+            'status' => \App\Enums\ChapterStatus::IN_REVIEW,
         ]);
 
         return $version;

@@ -35,7 +35,7 @@
     <div class="register-card">
         @if ($errors->any())
             <div style="background-color: #fde8e8; border: 1px solid #f8b4b4; color: #9b1c1c; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; font-size: 0.85rem;">
-                <div style="font-weight: 700; margin-bottom: 5px;">Pendaftaran belum berhasil:</div>
+                <div style="font-weight: 700; margin-bottom: 5px;">Pendaftaran Gagal:</div>
                 <ul style="margin: 0; padding-left: 20px;">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>

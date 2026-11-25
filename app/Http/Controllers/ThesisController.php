@@ -64,6 +64,9 @@ class ThesisController extends Controller
         if ($user->isMahasiswa() && $thesis->student_id !== $user->id) {
             abort(403, 'Anda tidak memiliki hak akses untuk melihat skripsi ini.');
         }
+        if ($user->isDosen() && !$thesis->isSupervisor($user)) {
+            abort(403, 'Anda bukan dosen pembimbing untuk skripsi ini.');
+        }
 
         $this->analyticsService->analyzeThesis($thesis);
 

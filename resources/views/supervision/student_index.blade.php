@@ -49,7 +49,11 @@
                         </div>
 
                         <div class="pt-2 border-t border-slate-200/60">
-                            @if($slot->hasAvailableQuota())
+                            @if(in_array($slot->id, $myBookedSlotIds ?? []))
+                                <button disabled class="w-full py-2 px-3 bg-purple-100 text-purple-700 rounded-xl text-xs font-semibold cursor-not-allowed">
+                                    Sudah Diajukan
+                                </button>
+                            @elseif($slot->hasAvailableQuota())
                                 <button type="button" @click="selectedSlot = {{ $slot->id }}; showBookModal = true"
                                     class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition">
                                     Ajukan Bimbingan di Slot Ini
@@ -60,6 +64,41 @@
                                 </button>
                             @endif
                         </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
+    <!-- Approved Upcoming Schedule -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
+        <div class="mb-4">
+            <h3 class="text-base font-bold text-slate-900">Jadwal Bimbingan Mendatang (Disetujui)</h3>
+            <p class="text-xs text-slate-500">Daftar jadwal bimbingan Anda yang telah disetujui oleh dosen pembimbing.</p>
+        </div>
+
+        @if(($approvedSessions ?? collect())->isEmpty())
+            <p class="text-xs text-slate-400 text-center py-6">Belum ada jadwal bimbingan yang disetujui saat ini.</p>
+        @else
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($approvedSessions as $session)
+                    <div class="border border-purple-200 bg-purple-50/40 rounded-2xl p-4 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">
+                                {{ $session->status->label() }}
+                            </span>
+                            <span class="text-[11px] font-semibold text-purple-800">
+                                {{ $session->scheduled_at ? $session->scheduled_at->isoFormat('dddd, D MMM Y - HH:mm') . ' WIB' : '-' }}
+                            </span>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900">{{ $session->topic }}</h4>
+                        <p class="text-xs text-slate-600">Dosen: <strong>{{ $session->supervisor?->name ?? '-' }}</strong></p>
+                        @if($session->slot?->room_or_link)
+                            <p class="text-[11px] text-slate-500">📍 {{ $session->slot->room_or_link }}</p>
+                        @endif
+                        @if($session->supervisor_notes)
+                            <p class="text-[11px] text-slate-600 italic">Catatan Dosen: "{{ $session->supervisor_notes }}"</p>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -105,7 +144,13 @@
                                 <td class="py-2.5 px-3 max-w-xs text-slate-600">
                                     @if($req->meeting_summary)
                                         <span class="font-bold text-slate-700 block">Berita Acara:</span>
-                                        <p class="truncate">{{ $req->meeting_summary }}</p>
+                                        <p>{{ $req->meeting_summary }}</p>
+                                        @if($req->action_items)
+                                            <span class="text-[11px] text-purple-700 block mt-1">Tindak Lanjut: {{ $req->action_items }}</span>
+                                        @endif
+                                    @elseif($req->status === \App\Enums\SupervisionStatus::REJECTED && $req->supervisor_notes)
+                                        <span class="font-bold text-rose-700 block">Alasan Penolakan:</span>
+                                        <span class="text-rose-600">{{ $req->supervisor_notes }}</span>
                                     @elseif($req->supervisor_notes)
                                         <span class="text-slate-500 italic">{{ $req->supervisor_notes }}</span>
                                     @else

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\SupervisionStatus;
 use App\Models\AuditLog;
+use App\Models\Notification;
 use App\Models\SupervisionRequest;
 use App\Models\SupervisionSlot;
 use App\Models\Thesis;
@@ -49,7 +50,26 @@ class SupervisionController extends Controller
                 ->latest()
                 ->paginate(10);
 
-            return view('supervision.student_index', compact('thesis', 'supervisors', 'availableSlots', 'myRequests'));
+            $approvedSessions = SupervisionRequest::where('student_id', $user->id)
+                ->where('status', SupervisionStatus::ACCEPTED)
+                ->with(['supervisor', 'slot'])
+                ->orderBy('scheduled_at')
+                ->get();
+
+            $myBookedSlotIds = SupervisionRequest::where('student_id', $user->id)
+                ->whereIn('status', [SupervisionStatus::REQUESTED, SupervisionStatus::ACCEPTED])
+                ->pluck('supervision_slot_id')
+                ->filter()
+                ->all();
+
+            return view('supervision.student_index', compact(
+                'thesis',
+                'supervisors',
+                'availableSlots',
+                'myRequests',
+                'approvedSessions',
+                'myBookedSlotIds'
+            ));
         }
 
         if ($user->isDosen()) {
@@ -141,6 +161,14 @@ class SupervisionController extends Controller
 
         AuditLog::log('SUPERVISION_REQUESTED', $supervisionRequest, "Mahasiswa {$user->name} mengajukan bimbingan: {$supervisionRequest->topic}.");
 
+        Notification::sendTo(
+            $slot->supervisor_id,
+            'Pengajuan Bimbingan Baru',
+            "{$user->name} mengajukan bimbingan dengan topik: {$supervisionRequest->topic}.",
+            'supervision_request',
+            route('supervision.index')
+        );
+
         return back()->with('success', 'Pengajuan bimbingan berhasil dikirim. Menunggu persetujuan dosen pembimbing.');
     }
 
@@ -153,13 +181,23 @@ class SupervisionController extends Controller
 
         $validated = $request->validate([
             'status' => ['required', 'in:accepted,rejected,rescheduled'],
-            'supervisor_notes' => ['nullable', 'string', 'max:1000'],
+            'supervisor_notes' => ['required_if:status,rejected', 'nullable', 'string', 'max:1000'],
+        ], [
+            'supervisor_notes.required_if' => 'Alasan penolakan wajib diisi apabila pengajuan bimbingan ditolak.',
         ]);
 
         $statusEnum = SupervisionStatus::from($validated['status']);
-        $this->scheduleService->updateStatus($supervisionRequest, $statusEnum, $validated['supervisor_notes']);
+        $this->scheduleService->updateStatus($supervisionRequest, $statusEnum, $validated['supervisor_notes'] ?? null);
 
         AuditLog::log('SUPERVISION_STATUS_UPDATED', $supervisionRequest, "Dosen mengubah status bimbingan menjadi {$statusEnum->label()}.");
+
+        Notification::sendTo(
+            $supervisionRequest->student_id,
+            'Status Pengajuan Bimbingan: ' . $statusEnum->label(),
+            "Pengajuan bimbingan topik '{$supervisionRequest->topic}' diubah menjadi {$statusEnum->label()}.",
+            'supervision_response',
+            route('supervision.index')
+        );
 
         return back()->with('success', "Status pengajuan bimbingan berhasil diperbarui menjadi {$statusEnum->label()}.");
     }
@@ -179,6 +217,14 @@ class SupervisionController extends Controller
         $this->scheduleService->completeSession($supervisionRequest, $validated);
 
         AuditLog::log('SUPERVISION_COMPLETED', $supervisionRequest, "Sesi bimbingan diselesaikan dengan catatan berita acara.");
+
+        Notification::sendTo(
+            $supervisionRequest->student_id,
+            'Sesi Bimbingan Selesai',
+            "Dosen {$user->name} telah menyelesaikan sesi bimbingan '{$supervisionRequest->topic}' dan mengisi berita acara.",
+            'supervision_completed',
+            route('supervision.index')
+        );
 
         return back()->with('success', 'Berita Acara bimbingan berhasil disimpan dan sesi dinyatakan selesai.');
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ChapterStatus;
 use App\Models\AuditLog;
 use App\Models\DocumentVersion;
+use App\Models\Notification;
 use App\Models\ThesisChapter;
 use App\Services\AnalyticsAndRiskService;
 use App\Services\DocumentStorageService;
@@ -84,6 +85,20 @@ class ChapterController extends Controller
         $this->analyticsService->analyzeThesis($thesis);
 
         AuditLog::log('DRAFT_UPLOADED', $version, "Mahasiswa mengunggah {$chapter->title} Versi {$version->version_number}.");
+
+        $notifTitle = $version->version_number > 1
+            ? 'Unggahan Revisi: ' . $chapter->title
+            : 'Unggahan Bab Baru: ' . $chapter->title;
+
+        foreach (array_filter([$thesis->supervisor_1_id, $thesis->supervisor_2_id]) as $supervisorId) {
+            Notification::sendTo(
+                $supervisorId,
+                $notifTitle,
+                "{$user->name} mengunggah {$chapter->title} (Versi {$version->version_number}) untuk ditinjau.",
+                'chapter_upload',
+                route('chapters.show', $chapter)
+            );
+        }
 
         return redirect()->route('chapters.show', $chapter)
             ->with('success', "Draf {$chapter->title} versi {$version->version_number} berhasil diunggah.");
