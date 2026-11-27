@@ -79,6 +79,13 @@ class SupervisionScheduleService
             ]);
         }
 
+        $slotEnd = Carbon::parse($slot->date->toDateString() . ' ' . $slot->end_time);
+        if ($slotEnd->isPast()) {
+            throw ValidationException::withMessages([
+                'slot_id' => 'Slot bimbingan ini sudah berlalu.',
+            ]);
+        }
+
         return DB::transaction(function () use ($student, $slot, $thesis, $data) {
             $lockedSlot = SupervisionSlot::where('id', $slot->id)->lockForUpdate()->firstOrFail();
 
@@ -130,6 +137,29 @@ class SupervisionScheduleService
         return DB::transaction(function () use ($request, $status, $notes) {
             $previousStatus = $request->status;
 
+            $allowedTransitions = [
+                SupervisionStatus::REQUESTED->value => [
+                    SupervisionStatus::ACCEPTED->value,
+                    SupervisionStatus::REJECTED->value,
+                    SupervisionStatus::RESCHEDULED->value,
+                ],
+                SupervisionStatus::RESCHEDULED->value => [
+                    SupervisionStatus::ACCEPTED->value,
+                    SupervisionStatus::REJECTED->value,
+                    SupervisionStatus::RESCHEDULED->value,
+                ],
+                SupervisionStatus::ACCEPTED->value => [
+                    SupervisionStatus::RESCHEDULED->value,
+                    SupervisionStatus::REJECTED->value,
+                ],
+            ];
+
+            if (!in_array($status->value, $allowedTransitions[$previousStatus->value] ?? [], true)) {
+                throw ValidationException::withMessages([
+                    'status' => 'Perubahan status bimbingan tidak valid dari status saat ini.',
+                ]);
+            }
+
             $request->update([
                 'status' => $status,
                 'supervisor_notes' => $notes ?? $request->supervisor_notes,
@@ -156,13 +186,21 @@ class SupervisionScheduleService
      */
     public function completeSession(SupervisionRequest $request, array $data): SupervisionRequest
     {
-        $request->update([
-            'status' => SupervisionStatus::COMPLETED,
-            'meeting_summary' => $data['meeting_summary'],
-            'action_items' => $data['action_items'] ?? null,
-            'completed_at' => now(),
-        ]);
+        return DB::transaction(function () use ($request, $data) {
+            if ($request->status !== SupervisionStatus::ACCEPTED) {
+                throw ValidationException::withMessages([
+                    'status' => 'Hanya sesi bimbingan yang sudah diterima yang dapat diselesaikan.',
+                ]);
+            }
 
-        return $request;
+            $request->update([
+                'status' => SupervisionStatus::COMPLETED,
+                'meeting_summary' => $data['meeting_summary'],
+                'action_items' => $data['action_items'] ?? null,
+                'completed_at' => now(),
+            ]);
+
+            return $request->fresh();
+        });
     }
 }

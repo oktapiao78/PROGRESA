@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class ThesisController extends Controller
 {
@@ -104,8 +105,17 @@ class ThesisController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:500'],
             'abstract' => ['nullable', 'string'],
+            'supervisor_1_id' => [
+                'nullable',
+                'different:supervisor_2_id',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', UserRole::DOSEN->value)),
+            ],
+            'supervisor_2_id' => [
+                'nullable',
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', UserRole::DOSEN->value)),
+            ],
             'target_completion_date' => ['nullable', 'date'],
-            'status' => ['nullable', 'string'],
+            'status' => ['nullable', Rule::enum(ThesisStatus::class)],
         ]);
 
         $thesis->update($validated);

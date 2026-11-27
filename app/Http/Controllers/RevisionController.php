@@ -9,6 +9,7 @@ use App\Models\ThesisChapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class RevisionController extends Controller
 {
@@ -23,7 +24,13 @@ class RevisionController extends Controller
 
         $validated = $request->validate([
             'note' => ['required', 'string', 'max:2000'],
-            'document_version_id' => ['nullable', 'exists:document_versions,id'],
+            // A revision may only refer to a version from this chapter.
+            'document_version_id' => [
+                'nullable',
+                Rule::exists('document_versions', 'id')->where(
+                    fn ($query) => $query->where('thesis_chapter_id', $chapter->id)
+                ),
+            ],
         ]);
 
         $item = DB::transaction(function () use ($chapter, $validated, $user) {
